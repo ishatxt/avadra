@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Wizarding Library — Seven volumes, kept lit</title>
+  <meta name="description" content="An unofficial personal reading room for the seven Harry Potter novels. Read in order in a quiet browser reader that remembers your place.">
+  <meta name="theme-color" content="#091119">
+  <meta property="og:title" content="The Wizarding Library">
+  <meta property="og:description" content="Seven volumes, kept lit. A personal Harry Potter reading room with a reader that remembers your place.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/ibarra-real-nova-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/literata-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/library.css">
+  <script type="module" src="assets/js/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header" id="top">
+    <div class="container site-header__inner">
+      <a class="brand" href="./" aria-label="The Wizarding Library, home">
+        <svg class="brand__mark" viewBox="0 0 30 34" aria-hidden="true" fill="none">
+          <path d="M15 1.4c.42 3.72 2.2 5.5 5.9 5.92-3.7.42-5.48 2.2-5.9 5.92-.42-3.72-2.2-5.5-5.9-5.92 3.7-.42 5.48-2.2 5.9-5.92Z" fill="currentColor"/>
+          <path d="M3 17.3c3.9-1.5 8-1.2 12 .9v13.2c-4-2.1-8.1-2.4-12-.9V17.3ZM27 17.3c-3.9-1.5-8-1.2-12 .9v13.2c4-2.1 8.1-2.4 12-.9V17.3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+          <path d="M15 18.2v13.2" stroke="currentColor" stroke-width="1.3"/>
+        </svg>
+        <span class="brand__name">The Wizarding Library</span>
+      </a>
+
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="visually-hidden">Open menu</span>
+        <span class="menu-toggle__bars" aria-hidden="true"></span>
+      </button>
+
+      <nav class="site-nav" id="site-nav" aria-label="Primary">
+        <a href="#collection">The collection</a>
+        <a href="#about">Provenance</a>
+        <a class="nav-resume" href="reader.html" data-nav-resume hidden>
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-bookmark"></use></svg>
+          <span data-nav-resume-label>Resume reading</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="container hero__inner">
+        <div class="hero__copy">
+          <p class="hero__kicker">
+            <svg aria-hidden="true"><use href="assets/icons.svg#icon-spark"></use></svg>
+            A personal reading room for the series
+          </p>
+          <h1 class="hero__title" id="hero-title">
+            <span>Seven volumes,</span>
+            <span class="hero__title-accent">kept lit.</span>
+          </h1>
+          <p class="hero__lede">
+            A small, personal reading room for the seven Harry Potter novels —
+            catalogued in reading order and opened in a quiet browser reader that
+            remembers exactly where you stopped.
+          </p>
+          <div class="hero__actions">
+            <a class="btn btn--gold" href="#collection">
+              Enter the collection
+              <svg aria-hidden="true"><use href="assets/icons.svg#icon-arrow-right"></use></svg>
+            </a>
+            <a class="text-link" href="#about">How the library works</a>
+          </div>
+          <a class="hero__resume" href="reader.html" data-hero-resume hidden>
+            <svg aria-hidden="true"><use href="assets/icons.svg#icon-bookmark"></use></svg>
+            <span data-hero-resume-label>Continue where you left off</span>
+          </a>
+          <p class="hero__note">
+            <svg aria-hidden="true"><use href="assets/icons.svg#icon-lock"></use></svg>
+            No accounts, no trackers. Your reading place stays in this browser.
+          </p>
+        </div>
+
+        <div class="night-shelf" aria-label="Selections from the night shelf">
+          <div class="night-shelf__arch" aria-hidden="true"></div>
+          <svg class="night-shelf__sky" viewBox="0 0 340 190" aria-hidden="true" fill="none" stroke="currentColor">
+            <circle cx="170" cy="94" r="78" stroke-width="0.8" stroke-dasharray="1 6" opacity="0.55"/>
+            <circle cx="170" cy="94" r="58" stroke-width="0.7" opacity="0.24"/>
+            <path d="M104 120l30-48 39 25 35-47 30 58" stroke-width="0.9" opacity="0.65"/>
+            <path d="M170 16v156M92 94h156" stroke-width="0.5" opacity="0.28"/>
+            <path d="M134 62c.3 2.65 1.57 3.92 4.2 4.22-2.63.3-3.9 1.57-4.2 4.22-.3-2.65-1.57-3.92-4.2-4.22 2.63-.3 3.9-1.57 4.2-4.22Z" fill="currentColor" stroke="none" opacity="0.85"/>
+            <path d="M208 50c.3 2.65 1.57 3.92 4.2 4.22-2.63.3-3.9 1.57-4.2 4.22-.3-2.65-1.57-3.92-4.2-4.22 2.63-.3 3.9-1.57 4.2-4.22Z" fill="currentColor" stroke="none" opacity="0.7"/>
+            <circle cx="104" cy="120" r="2.3" fill="currentColor" stroke="none" opacity="0.8"/>
+            <circle cx="173" cy="97" r="1.8" fill="currentColor" stroke="none" opacity="0.55"/>
+            <circle cx="238" cy="108" r="2" fill="currentColor" stroke="none" opacity="0.7"/>
+            <circle cx="208" cy="50" r="1.3" fill="currentColor" stroke="none" opacity="0.45"/>
+          </svg>
+          <div class="night-shelf__glow" aria-hidden="true"></div>
+          <div class="night-shelf__covers" data-night-shelf></div>
+          <div class="night-shelf__ledge" aria-hidden="true"></div>
+          <p class="night-shelf__caption">
+            <strong>From the night shelf</strong>
+            <span>Volumes I, IV &amp; VII</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="ledger" aria-label="About this library">
+      <div class="container ledger__inner">
+        <p><strong>Editions</strong>Seven novels, catalogued in reading order</p>
+        <p><strong>Copies</strong>Personal files, kept apart from the public site</p>
+        <p><strong>Privacy</strong>No accounts, no analytics — progress kept on your device</p>
+      </div>
+    </section>
+
+    <noscript>
+      <div class="container">
+        <p class="noscript-note">
+          The catalogue needs JavaScript to open. The seven PDFs live in the
+          <code>books/</code> folder and can be opened directly; start with
+          <a href="books/harry-potter-01-philosophers-stone.pdf">The Philosopher's Stone</a>, if present.
+        </p>
+      </div>
+    </noscript>
+
+    <section class="feature" aria-labelledby="feature-title">
+      <div class="container">
+        <div class="section-head">
+          <div class="section-head__main">
+            <h2 id="feature-title">From the night desk</h2>
+            <p>
+              The first volume left open under the lamp. Begin where the story
+              begins.
+            </p>
+          </div>
+          <div class="section-head__aside">
+            <a class="text-link" href="#collection">See all seven volumes</a>
+          </div>
+        </div>
+        <div class="feature-panel" id="feature-panel">
+          <p class="feature-panel__placeholder">Lighting the desk…</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="recent section" aria-labelledby="recent-title">
+      <div class="container">
+        <div class="section-head">
+          <div class="section-head__main">
+            <h2 id="recent-title">Where to begin</h2>
+            <p>
+              The first three volumes, in order. Each record opens the full novel
+              in the reader and remembers your place.
+            </p>
+          </div>
+          <div class="section-head__aside">
+            <a class="text-link" href="#collection">Browse all seven</a>
+          </div>
+        </div>
+        <div class="recent-list" id="recent-list" aria-live="polite">
+          <p class="recent-list__loading">Opening the first volumes…</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="collection section" id="collection" aria-labelledby="collection-title">
+      <div class="container">
+        <div class="section-head">
+          <div class="section-head__main">
+            <h2 id="collection-title">The collection</h2>
+            <p>
+              Seven volumes, one continuous story. Search by title, year, or
+              character, and read them in order.
+            </p>
+          </div>
+          <div class="section-head__aside">
+            <p class="section-head__count" data-catalogue-total>Opening the shelves…</p>
+          </div>
+        </div>
+
+        <div class="collection__toolbar">
+          <form class="catalogue-search" role="search" data-search-form>
+            <svg aria-hidden="true"><use href="assets/icons.svg#icon-search"></use></svg>
+            <label class="visually-hidden" for="catalogue-search">Search the collection</label>
+            <input
+              type="search"
+              id="catalogue-search"
+              name="q"
+              placeholder="Search titles, years, or characters"
+              autocomplete="off"
+              spellcheck="false"
+            >
+            <button class="catalogue-search__clear" type="button" aria-label="Clear search" data-search-clear hidden>
+              <svg aria-hidden="true"><use href="assets/icons.svg#icon-x"></use></svg>
+            </button>
+          </form>
+
+          <div class="catalogue-controls">
+            <div class="filter-set" role="group" aria-label="Filter by category">
+              <button class="filter-chip" type="button" data-filter="All" aria-pressed="true">All</button>
+              <button class="filter-chip" type="button" data-filter="Harry Potter" aria-pressed="false">Harry Potter</button>
+            </div>
+            <div class="sort-field">
+              <label class="visually-hidden" for="catalogue-sort">Sort the collection</label>
+              <select id="catalogue-sort" data-sort>
+                <option value="series">Reading order</option>
+                <option value="title">Title, A–Z</option>
+                <option value="author">Author, A–Z</option>
+                <option value="oldest">Publication year</option>
+                <option value="newest">Recently added</option>
+                <option value="shortest">Shortest read</option>
+              </select>
+              <svg aria-hidden="true"><use href="assets/icons.svg#icon-chevron-down"></use></svg>
+            </div>
+          </div>
+        </div>
+
+        <p class="catalogue-status" id="catalogue-status" aria-live="polite">
+          <span>Opening the catalogue…</span>
+        </p>
+
+        <div id="catalogue-region">
+          <div class="skeleton-grid" aria-hidden="true">
+            <div class="skeleton-card">
+              <div class="skeleton-card__cover"></div>
+              <div class="skeleton-card__line"></div>
+              <div class="skeleton-card__line skeleton-card__line--short"></div>
+            </div>
+            <div class="skeleton-card">
+              <div class="skeleton-card__cover"></div>
+              <div class="skeleton-card__line"></div>
+              <div class="skeleton-card__line skeleton-card__line--short"></div>
+            </div>
+            <div class="skeleton-card">
+              <div class="skeleton-card__cover"></div>
+              <div class="skeleton-card__line"></div>
+              <div class="skeleton-card__line skeleton-card__line--short"></div>
+            </div>
+            <div class="skeleton-card">
+              <div class="skeleton-card__cover"></div>
+              <div class="skeleton-card__line"></div>
+              <div class="skeleton-card__line skeleton-card__line--short"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="collection__foot">
+          <p>
+            Seven personal copies, catalogued for private reading. The book files
+            are not distributed with this site. <a href="#about">Read about these copies</a>.
+          </p>
+          <a class="text-link" href="#about">
+            About this shelf
+            <svg aria-hidden="true"><use href="assets/icons.svg#icon-arrow-right"></use></svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="provenance section" id="about" aria-labelledby="provenance-title">
+      <div class="container provenance__inner">
+        <div class="provenance__intro">
+          <p class="provenance__mark">About this shelf</p>
+          <h2 id="provenance-title">A private shelf, not an official edition.</h2>
+          <p>
+            The Wizarding Library is an unofficial, personal catalogue of the seven
+            Harry Potter novels. It is not affiliated with J. K. Rowling, Bloomsbury,
+            Scholastic, Warner Bros., or any other rights holder.
+          </p>
+          <p>
+            The interface, catalogue records, and reader are original to this
+            project. The PDFs and cover images are personal copies supplied by the
+            reader. They are not offered for download and should not be redistributed.
+          </p>
+        </div>
+        <div class="provenance__points">
+          <div class="provenance-point">
+            <span class="provenance-point__num" aria-hidden="true">i</span>
+            <div>
+              <h3>Reading order, kept straight</h3>
+              <p>
+                Every volume is numbered from one to seven and dated by its original
+                publication year. The default sort follows the story, not the alphabet.
+              </p>
+            </div>
+          </div>
+          <div class="provenance-point">
+            <span class="provenance-point__num" aria-hidden="true">ii</span>
+            <div>
+              <h3>Private copies, plainly marked</h3>
+              <p>
+                Each record points to a PDF in the <code>books/</code> folder and a
+                cover in <code>assets/covers/</code>. If either file is missing, the
+                page says so instead of failing silently.
+              </p>
+            </div>
+          </div>
+          <div class="provenance-point">
+            <span class="provenance-point__num" aria-hidden="true">iii</span>
+            <div>
+              <h3>Your place, kept quietly</h3>
+              <p>
+                Reading position, bookmarks, and display preferences are stored in
+                your browser's local storage. Nothing is sent anywhere. Clearing
+                site data clears your place; there is no account to recover.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="site-footer__top">
+        <div class="site-footer__brand-col">
+          <a class="brand" href="#top" aria-label="The Wizarding Library, back to top">
+            <svg class="brand__mark" viewBox="0 0 30 34" aria-hidden="true" fill="none">
+              <path d="M15 1.4c.42 3.72 2.2 5.5 5.9 5.92-3.7.42-5.48 2.2-5.9 5.92-.42-3.72-2.2-5.5-5.9-5.92 3.7-.42 5.48-2.2 5.9-5.92Z" fill="currentColor"/>
+              <path d="M3 17.3c3.9-1.5 8-1.2 12 .9v13.2c-4-2.1-8.1-2.4-12-.9V17.3ZM27 17.3c-3.9-1.5-8-1.2-12 .9v13.2c4-2.1 8.1-2.4 12-.9V17.3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+              <path d="M15 18.2v13.2" stroke="currentColor" stroke-width="1.3"/>
+            </svg>
+            <span class="brand__name">The Wizarding Library</span>
+          </a>
+          <p class="site-footer__note">
+            An independent, unofficial reading room for the seven Harry Potter
+            novels, made with HTML, CSS, vanilla JavaScript, and Mozilla PDF.js.
+            No framework, no account, no hurry.
+          </p>
+        </div>
+        <div class="site-footer__col">
+          <h2 class="footer-heading">The collection</h2>
+          <ul>
+            <li><a href="#collection" data-footer-filter="All">All volumes</a></li>
+            <li><a href="#collection" data-footer-filter="Harry Potter">Harry Potter</a></li>
+            <li><a href="reader.html" data-footer-reader>Open the reader</a></li>
+          </ul>
+        </div>
+        <div class="site-footer__col">
+          <h2 class="footer-heading">The library</h2>
+          <ul>
+            <li><a href="#about">About this shelf</a></li>
+            <li><a href="#about">Rights &amp; copies</a></li>
+            <li><a href="README.md">Setup notes</a></li>
+            <li><a href="THIRD-PARTY-NOTICES.md">Third-party notices</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="site-footer__bottom">
+        <p>© 2026 The Wizarding Library. An unofficial fan project. Harry Potter and related names belong to their respective rights holders.</p>
+        <p>Built for slow reading and modest machines.</p>
+      </div>
+    </div>
+  </footer>
+
+  <dialog class="book-dialog" id="book-dialog" aria-labelledby="book-dialog-title">
+    <div class="book-dialog__layout">
+      <div class="book-dialog__visual" id="book-dialog-visual"></div>
+      <div class="book-dialog__content">
+        <button class="dialog-close book-dialog__close" type="button" data-close-dialog aria-label="Close book details">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-x"></use></svg>
+        </button>
+        <div id="book-dialog-body"></div>
+      </div>
+    </div>
+  </dialog>
+</body>
+</html>

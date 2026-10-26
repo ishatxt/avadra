@@ -1,0 +1,6 @@
+# Personal book files — keep out of public repositories.
+books/*.pdf
+
+# Editor and OS noise.
+.DS_Store
+Thumbs.db
