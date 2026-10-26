@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reader — The Wizarding Library</title>
+  <meta name="description" content="The Wizarding Library reader. Read a Harry Potter novel in scroll or facing-page views, with optional music, bookmarks, and a remembered place.">
+  <meta name="theme-color" content="#070d12">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/ibarra-real-nova-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/literata-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/reader.css">
+  <script type="module" src="assets/js/reader.js"></script>
+</head>
+<body class="reader" data-theme="midnight">
+  <a class="skip-link" href="#reader-main">Skip to the reading area</a>
+
+  <div class="reader-shell" id="reader-shell">
+    <header class="reader-header">
+      <div class="reader-header__inner">
+        <a class="reader-back" href="index.html#collection" aria-label="Back to the library collection">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-arrow-left"></use></svg>
+          <span>Library</span>
+        </a>
+
+        <div class="reader-book">
+          <p class="reader-book__kicker">The Wizarding Library</p>
+          <h1 class="reader-book__title" id="reader-book-title">The reading room</h1>
+          <p class="reader-book__author" id="reader-book-author">Opening a volume…</p>
+        </div>
+
+        <div class="reader-header__actions">
+          <button class="reader-icon-button" type="button" data-action="music" aria-expanded="false" aria-controls="reader-music" aria-label="Reading music" title="Reading music (P)">
+            <svg aria-hidden="true"><use href="assets/icons.svg#icon-music"></use></svg>
+          </button>
+          <button class="reader-icon-button" type="button" data-action="focus" aria-pressed="false" aria-label="Enter focus mode" title="Focus mode (F)">
+            <svg aria-hidden="true"><use href="assets/icons.svg#icon-focus"></use></svg>
+          </button>
+          <button class="reader-icon-button reader-header__shortcuts" type="button" data-open-dialog="shortcuts" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">
+            <svg aria-hidden="true"><use href="assets/icons.svg#icon-keyboard"></use></svg>
+          </button>
+          <button class="reader-icon-button" type="button" data-open-dialog="display" aria-label="Display settings" title="Display settings (D)">
+            <svg aria-hidden="true"><use href="assets/icons.svg#icon-settings"></use></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="reader-music" id="reader-music" hidden>
+        <div class="reader-music__head">
+          <p class="reader-music__eyebrow">Reading music</p>
+          <p class="reader-music__title">Hegwid’s Theme</p>
+        </div>
+        <div class="reader-music__main">
+          <button class="reader-music__play" type="button" data-music-toggle aria-label="Play music" aria-pressed="false">
+            <svg aria-hidden="true"><use href="assets/icons.svg#icon-play"></use></svg>
+          </button>
+          <div class="reader-music__track">
+            <label class="visually-hidden" for="music-seek">Music position</label>
+            <input class="reader-music__seek" id="music-seek" type="range" min="0" max="0" step="0.1" value="0" disabled>
+            <div class="reader-music__times">
+              <span id="music-current">0:00</span>
+              <span id="music-duration">0:00</span>
+            </div>
+          </div>
+        </div>
+        <div class="reader-music__volume">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-volume"></use></svg>
+          <label class="visually-hidden" for="music-volume">Music volume</label>
+          <input id="music-volume" type="range" min="0" max="1" step="0.01" value="0.55">
+          <span class="reader-music__volume-value" id="music-volume-value">55%</span>
+        </div>
+        <p class="reader-music__note">Loops while you read. Your volume is remembered.</p>
+      </div>
+    </header>
+
+    <audio id="reading-audio" src="assets/music/hegwids-theme.mp3" loop preload="metadata" hidden></audio>
+
+    <div class="reader-progress" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="reader-progress-bar">
+      <span class="reader-progress__fill" id="reader-progress-fill"></span>
+    </div>
+
+    <div class="reader-toolbar" role="toolbar" aria-label="Reading controls">
+      <div class="reader-mode-switch" role="group" aria-label="Reading mode">
+        <button type="button" data-mode="scroll" aria-pressed="true" title="Continuous scroll" disabled>
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-scroll"></use></svg>
+          <span>Scroll</span>
+        </button>
+        <button type="button" data-mode="book" aria-pressed="false" title="Facing pages" disabled>
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-columns"></use></svg>
+          <span>Book</span>
+        </button>
+      </div>
+
+      <div class="reader-pager">
+        <button class="reader-icon-button" type="button" data-action="previous" aria-label="Previous page" title="Previous page (←)" disabled>
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-arrow-left"></use></svg>
+        </button>
+        <form class="reader-page-form" data-page-form>
+          <label class="visually-hidden" for="reader-page-input">Go to page</label>
+          <input id="reader-page-input" name="page" type="number" min="1" value="1" inputmode="numeric" autocomplete="off" disabled>
+          <span class="reader-page-total">/ <span id="reader-page-total">—</span></span>
+        </form>
+        <button class="reader-icon-button" type="button" data-action="next" aria-label="Next page" title="Next page (→)" disabled>
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-arrow-right"></use></svg>
+        </button>
+      </div>
+
+      <div class="reader-toolbar__tools">
+        <button class="reader-tool" type="button" data-action="bookmark" aria-pressed="false" title="Bookmark this page (B)" disabled>
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-bookmark"></use></svg>
+          <span class="reader-tool__label">Bookmark</span>
+        </button>
+
+        <div class="reader-zoom" role="group" aria-label="Zoom">
+          <button class="reader-icon-button reader-icon-button--small" type="button" data-action="zoom-out" aria-label="Zoom out" title="Zoom out (−)" disabled>
+            <svg aria-hidden="true"><use href="assets/icons.svg#icon-minus"></use></svg>
+          </button>
+          <button class="reader-zoom__value" type="button" data-action="fit" aria-label="Fit pages to the window" title="Fit pages (0)" disabled>Fit</button>
+          <button class="reader-icon-button reader-icon-button--small" type="button" data-action="zoom-in" aria-label="Zoom in" title="Zoom in (+)" disabled>
+            <svg aria-hidden="true"><use href="assets/icons.svg#icon-plus"></use></svg>
+          </button>
+        </div>
+
+        <button class="reader-tool reader-tool--count" type="button" data-open-dialog="bookmarks" aria-label="View bookmarks" title="Bookmarks (L)" disabled>
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-list"></use></svg>
+          <span class="reader-tool__label">Bookmarks</span>
+          <span class="reader-tool__count" data-bookmark-count>0</span>
+        </button>
+
+        <button class="reader-icon-button" type="button" data-action="fullscreen" aria-label="Enter fullscreen" title="Fullscreen (Shift+F)" disabled>
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-expand"></use></svg>
+        </button>
+      </div>
+    </div>
+
+    <main class="reader-main" id="reader-main" tabindex="-1">
+      <div class="reader-loading" id="reader-loading" role="status" aria-live="polite">
+        <div class="reader-loading__inner">
+          <div class="reader-loading__spinner" aria-hidden="true"></div>
+          <div class="reader-loading__cover" id="reader-loading-cover" hidden></div>
+          <p class="reader-loading__eyebrow" id="reader-loading-eyebrow">The reading room</p>
+          <h2 class="reader-loading__title" id="reader-loading-title">Finding your place…</h2>
+          <p class="reader-loading__text" id="reader-loading-text">Fetching the catalogue.</p>
+          <div class="reader-loading__track" aria-hidden="true">
+            <span class="reader-loading__bar" id="reader-loading-bar"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="reader-stage" id="reader-stage" hidden>
+        <div class="scroll-view" id="scroll-view"></div>
+        <div class="book-view" id="book-view" aria-label="Facing pages" hidden>
+          <div class="book-spread" id="book-spread"></div>
+        </div>
+      </div>
+
+      <div class="reader-turn" id="reader-turn" aria-hidden="true" hidden></div>
+
+      <div class="reader-error" id="reader-error" role="alert" hidden>
+        <div class="reader-error__inner">
+          <svg class="reader-error__seal" aria-hidden="true"><use href="assets/icons.svg#icon-book-open"></use></svg>
+          <p class="reader-error__eyebrow">Reading room closed</p>
+          <h2 id="reader-error-title">This volume could not be opened.</h2>
+          <p class="reader-error__message" id="reader-error-message">The book file may be missing, or the browser may have blocked it.</p>
+          <p class="reader-error__hint" id="reader-error-hint" hidden></p>
+          <div class="reader-error__actions">
+            <button class="reader-button reader-button--primary" type="button" data-retry-reader hidden>Try again</button>
+            <a class="reader-button" href="index.html#collection">Back to the collection</a>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="reader-status">
+      <p class="reader-status__hint">
+        <kbd>←</kbd> <kbd>→</kbd> turn pages
+        <span aria-hidden="true">·</span>
+        <kbd>B</kbd> bookmark
+        <span aria-hidden="true">·</span>
+        <button class="reader-status__help" type="button" data-open-dialog="shortcuts">All shortcuts</button>
+      </p>
+      <p class="reader-status__pages" id="reader-status-pages">Preparing the edition…</p>
+    </footer>
+
+    <button class="reader-focus-exit" type="button" data-action="focus">
+      <svg aria-hidden="true"><use href="assets/icons.svg#icon-collapse"></use></svg>
+      Exit focus
+      <kbd>Esc</kbd>
+    </button>
+
+    <div class="reader-toast" id="reader-toast" role="status" aria-live="polite"></div>
+  </div>
+
+  <dialog class="reader-dialog" id="display-dialog" aria-labelledby="display-title">
+    <div class="reader-dialog__head">
+      <div>
+        <p class="reader-dialog__eyebrow">The reading room</p>
+        <h2 id="display-title">Display</h2>
+      </div>
+      <button class="reader-dialog__close" type="button" data-close-dialog aria-label="Close display settings">
+        <svg aria-hidden="true"><use href="assets/icons.svg#icon-x"></use></svg>
+      </button>
+    </div>
+    <div class="reader-dialog__body">
+      <fieldset class="reader-setting-group">
+        <legend>Interface theme</legend>
+        <div class="theme-choices">
+          <label class="theme-choice">
+            <input type="radio" name="reader-theme" value="midnight" checked>
+            <span class="theme-choice__swatch theme-choice__swatch--midnight" aria-hidden="true"></span>
+            <span class="theme-choice__text">
+              <strong>Midnight</strong>
+              <small>Deep ink chrome for late reading.</small>
+            </span>
+          </label>
+          <label class="theme-choice">
+            <input type="radio" name="reader-theme" value="study">
+            <span class="theme-choice__swatch theme-choice__swatch--study" aria-hidden="true"></span>
+            <span class="theme-choice__text">
+              <strong>Study</strong>
+              <small>A warm, lamplit working surface.</small>
+            </span>
+          </label>
+        </div>
+      </fieldset>
+
+      <label class="reader-switch">
+        <span class="reader-switch__text">
+          <strong>Invert page colours</strong>
+          <small>Turns the paper dark and the ink light. Illustrations, if any, are inverted as well. The reader interface keeps its own theme.</small>
+        </span>
+        <input type="checkbox" id="setting-invert-pages">
+      </label>
+
+      <label class="reader-switch">
+        <span class="reader-switch__text">
+          <strong>Page-turn animation</strong>
+          <small>Adds a short paper-turn effect when you move between spreads in Book mode.</small>
+        </span>
+        <input type="checkbox" id="setting-page-turn" checked>
+      </label>
+
+      <p class="reader-dialog__note" id="reduced-motion-note" hidden>
+        Your system asks for reduced motion, so the page-turn animation is paused.
+      </p>
+      <p class="reader-dialog__note">
+        These preferences are stored only in this browser, along with your place and bookmarks.
+      </p>
+    </div>
+    <div class="reader-dialog__actions">
+      <button class="reader-button reader-button--primary" type="button" data-close-dialog>Done</button>
+    </div>
+  </dialog>
+
+  <dialog class="reader-dialog" id="shortcuts-dialog" aria-labelledby="shortcuts-title">
+    <div class="reader-dialog__head">
+      <div>
+        <p class="reader-dialog__eyebrow">At the desk</p>
+        <h2 id="shortcuts-title">Keyboard shortcuts</h2>
+      </div>
+      <button class="reader-dialog__close" type="button" data-close-dialog aria-label="Close keyboard shortcuts">
+        <svg aria-hidden="true"><use href="assets/icons.svg#icon-x"></use></svg>
+      </button>
+    </div>
+    <div class="reader-dialog__body">
+      <dl class="shortcut-list">
+        <div class="shortcut"><dt><kbd>→</kbd><span>or</span><kbd>Space</kbd></dt><dd>Next page</dd></div>
+        <div class="shortcut"><dt><kbd>←</kbd><span>or</span><kbd>Shift</kbd> <kbd>Space</kbd></dt><dd>Previous page</dd></div>
+        <div class="shortcut"><dt><kbd>Page Down</kbd><span>or</span><kbd>Page Up</kbd></dt><dd>Next or previous page</dd></div>
+        <div class="shortcut"><dt><kbd>Home</kbd><span>or</span><kbd>End</kbd></dt><dd>First or last page</dd></div>
+        <div class="shortcut"><dt><kbd>B</kbd></dt><dd>Add or remove a bookmark</dd></div>
+        <div class="shortcut"><dt><kbd>L</kbd></dt><dd>Open the bookmark list</dd></div>
+        <div class="shortcut"><dt><kbd>M</kbd></dt><dd>Switch between Scroll and Book modes</dd></div>
+        <div class="shortcut"><dt><kbd>P</kbd></dt><dd>Play or pause the reading music</dd></div>
+        <div class="shortcut"><dt><kbd>+</kbd><span>or</span><kbd>−</kbd><span>or</span><kbd>0</kbd></dt><dd>Zoom in, out, or fit</dd></div>
+        <div class="shortcut"><dt><kbd>D</kbd></dt><dd>Display settings</dd></div>
+        <div class="shortcut"><dt><kbd>F</kbd></dt><dd>Enter or leave focus mode</dd></div>
+        <div class="shortcut"><dt><kbd>Shift</kbd> <kbd>F</kbd></dt><dd>Enter or leave fullscreen</dd></div>
+        <div class="shortcut"><dt><kbd>?</kbd></dt><dd>This list</dd></div>
+        <div class="shortcut"><dt><kbd>Esc</kbd></dt><dd>Close a dialog or the music panel, or leave focus mode</dd></div>
+      </dl>
+      <p class="reader-dialog__note">Shortcuts pause while a dialog is open or while the page field has focus. Press Esc to leave the field.</p>
+    </div>
+    <div class="reader-dialog__actions">
+      <button class="reader-button reader-button--primary" type="button" data-close-dialog>Done</button>
+    </div>
+  </dialog>
+
+  <dialog class="reader-dialog" id="bookmarks-dialog" aria-labelledby="bookmarks-title">
+    <div class="reader-dialog__head">
+      <div>
+        <p class="reader-dialog__eyebrow">This edition</p>
+        <h2 id="bookmarks-title">Bookmarks</h2>
+      </div>
+      <button class="reader-dialog__close" type="button" data-close-dialog aria-label="Close bookmarks">
+        <svg aria-hidden="true"><use href="assets/icons.svg#icon-x"></use></svg>
+      </button>
+    </div>
+    <div class="reader-dialog__body">
+      <div class="bookmark-list" id="bookmark-list"></div>
+    </div>
+    <div class="reader-dialog__actions reader-dialog__actions--split">
+      <p class="reader-dialog__note">Bookmarks are kept in this browser.</p>
+      <button class="reader-button reader-button--primary" type="button" data-close-dialog>Done</button>
+    </div>
+  </dialog>
+
+  <noscript>
+    <div class="reader-noscript">
+      <p>The reader needs JavaScript to render PDF pages. You can open the
+        <a href="books/harry-potter-01-philosophers-stone.pdf">first book PDF</a> directly instead, if it is present.</p>
+    </div>
+  </noscript>
+</body>
+</html>

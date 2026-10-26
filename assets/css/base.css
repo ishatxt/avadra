@@ -1,0 +1,441 @@
+/* ==========================================================================
+   The Wizarding Library — design tokens, typography, primitives
+   ========================================================================== */
+
+@font-face {
+  font-family: "Ibarra Real Nova";
+  src: url("../fonts/ibarra-real-nova-normal.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Ibarra Real Nova";
+  src: url("../fonts/ibarra-real-nova-italic.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Literata";
+  src: url("../fonts/literata-normal.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Literata";
+  src: url("../fonts/literata-italic.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 300 700;
+  font-display: swap;
+}
+
+:root {
+  --font-display: "Ibarra Real Nova", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-body: "Literata", "Iowan Old Style", Georgia, serif;
+
+  --ink-1000: #070d12;
+  --ink-950: #091119;
+  --ink-900: #0b1620;
+  --ink-850: #0e1c27;
+  --ink-800: #122431;
+  --ink-700: #1a303e;
+
+  --ivory: #f0e7d6;
+  --ivory-strong: #f8f0e3;
+  --ivory-muted: #c7bdaa;
+  --mist: #9eabae;
+
+  --gold: #c6a15b;
+  --gold-bright: #e1c78e;
+  --gold-deep: #8d6d3c;
+  --gold-faint: rgba(198, 161, 91, 0.14);
+
+  --line: rgba(198, 161, 91, 0.26);
+  --line-faint: rgba(240, 231, 214, 0.1);
+  --line-strong: rgba(198, 161, 91, 0.46);
+
+  --paper: #f2e9d8;
+  --paper-strong: #f8f1e4;
+  --paper-deep: #e4d8c2;
+  --ink-on-paper: #211e18;
+  --muted-on-paper: #6b6153;
+
+  --cat-harry-potter: #c9a96a;
+  --cat-harry-potter-ink: #7a5a2a;
+
+  --container: 1240px;
+  --gutter: clamp(20px, 4.5vw, 64px);
+  --section-space: clamp(74px, 9.5vw, 138px);
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  --header-height: 78px;
+  --radius: 2px;
+  --focus-ring: var(--gold-bright);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ink-900);
+  color: var(--ivory);
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  font-weight: 400;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body.has-dialog {
+  overflow: hidden;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  color: var(--ivory-strong);
+  font-family: var(--font-display);
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: -0.018em;
+}
+
+p,
+blockquote,
+dl,
+dd {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+img {
+  height: auto;
+}
+
+::selection {
+  background: var(--gold);
+  color: var(--ink-1000);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.container {
+  width: min(100% - 2 * var(--gutter), var(--container));
+  margin-inline: auto;
+}
+
+.section {
+  padding-block: var(--section-space);
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 999;
+  padding: 10px 16px;
+  background: var(--paper);
+  color: var(--ink-on-paper);
+  font-size: 0.9rem;
+  transform: translateY(-160%);
+  transition: transform 180ms var(--ease);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+/* --------------------------------------------------------------------------
+   Buttons and links
+   -------------------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.72rem 1.35rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 180ms var(--ease), border-color 180ms var(--ease), color 180ms var(--ease);
+}
+
+.btn svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.btn--gold {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--ink-1000);
+}
+
+.btn--gold:hover {
+  background: var(--gold-bright);
+  border-color: var(--gold-bright);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: var(--line-strong);
+  color: var(--ivory);
+}
+
+.btn--ghost:hover {
+  border-color: var(--gold);
+  color: var(--gold-bright);
+}
+
+.btn--ink {
+  background: var(--ink-on-paper);
+  border-color: var(--ink-on-paper);
+  color: var(--paper-strong);
+}
+
+.btn--ink:hover {
+  background: #3b352b;
+  border-color: #3b352b;
+}
+
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding-block: 0.2rem;
+  border: 0;
+  border-bottom: 1px solid rgba(198, 161, 91, 0.55);
+  background: none;
+  color: var(--gold-bright);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: border-color 180ms var(--ease), color 180ms var(--ease);
+}
+
+.text-link:hover {
+  border-color: var(--gold-bright);
+  color: var(--ivory-strong);
+}
+
+.text-link svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+/* --------------------------------------------------------------------------
+   Book cover component
+   -------------------------------------------------------------------------- */
+
+.book-cover {
+  position: relative;
+  display: block;
+  container-type: inline-size;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: 2px 4px 4px 2px;
+  background: var(--ink-850);
+  box-shadow:
+    inset 1px 0 0 rgba(255, 255, 255, 0.05),
+    0 20px 44px -24px rgba(0, 0, 0, 0.9);
+  isolation: isolate;
+}
+
+.book-cover__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.book-cover::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 3;
+  width: 4.5%;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0));
+  pointer-events: none;
+}
+
+.book-cover__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  padding: 12.5% 9% 0;
+  text-align: center;
+}
+
+.book-cover--missing {
+  border: 1px solid rgba(198, 161, 91, 0.32);
+  background:
+    radial-gradient(circle at 50% 30%, rgba(198, 161, 91, 0.17), transparent 60%),
+    linear-gradient(165deg, #1c2430 0%, #0c1117 62%, #191410 100%);
+}
+
+.book-cover--missing .book-cover__overlay {
+  display: flex;
+}
+
+.book-cover--missing .book-cover__title {
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.45);
+}
+
+.book-cover__title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--ivory-strong);
+  font-family: var(--font-display);
+  font-size: clamp(13px, 8.7cqw, 48px);
+  font-weight: 500;
+  line-height: 0.99;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.16);
+}
+
+.book-cover[data-lines="1"] .book-cover__title {
+  font-size: clamp(17px, 11.3cqw, 60px);
+}
+
+.book-cover__author {
+  margin-top: auto;
+  margin-bottom: 13.5%;
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  font-size: clamp(8px, 3.15cqw, 18px);
+  font-style: italic;
+  line-height: 1.2;
+  letter-spacing: 0.015em;
+}
+
+/* --------------------------------------------------------------------------
+   Dialog primitives
+   -------------------------------------------------------------------------- */
+
+dialog {
+  color: var(--ink-on-paper);
+}
+
+dialog::backdrop {
+  background: rgba(3, 7, 10, 0.76);
+}
+
+.dialog-close {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(33, 30, 24, 0.2);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-on-paper);
+  transition: border-color 180ms var(--ease), background-color 180ms var(--ease);
+}
+
+.dialog-close:hover {
+  border-color: var(--ink-on-paper);
+  background: rgba(33, 30, 24, 0.05);
+}
+
+.dialog-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
