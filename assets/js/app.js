@@ -18,7 +18,6 @@ import {
 import {
   getLastRead,
   getProgress,
-  getBookmarks,
   refreshStorage,
   STORAGE_KEY,
 } from "./storage.js";
@@ -89,6 +88,7 @@ function coverMarkup(book, { eager = false } = {}) {
         width="600"
         height="900"
         loading="${eager ? "eager" : "lazy"}"
+        fetchpriority="${eager ? "high" : "low"}"
         decoding="async"
       >`
           : ""
@@ -565,7 +565,6 @@ function openBookDialog(bookId) {
   if (!book) return;
 
   const progress = getProgress(book.id);
-  const bookmarks = getBookmarks(book.id);
   const action = progress ? `Continue at page ${progress.page}` : "Begin reading";
   const source = book.source;
   const sourceMarkup = source.url
@@ -581,11 +580,6 @@ function openBookDialog(bookId) {
       <span>${escapeHtml(volumeLabel(book))}</span>
       ${book.year ? `<span>${book.year}</span>` : ""}
       <span>${escapeHtml(formatPageCount(book.pages))}</span>
-      ${
-        bookmarks.length
-          ? `<span>${bookmarks.length} bookmark${bookmarks.length === 1 ? "" : "s"}</span>`
-          : ""
-      }
     </p>
     <h2 class="book-dialog__title" id="book-dialog-title">${escapeHtml(book.title)}</h2>
     <p class="book-dialog__author">${escapeHtml(book.author)}</p>

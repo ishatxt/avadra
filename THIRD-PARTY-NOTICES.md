@@ -5,39 +5,54 @@ open-source software. This file records the licences for that software. It is
 not legal advice. The Harry Potter novels and their cover art are not covered by
 any licence granted by this project.
 
+The same notices are published as `notices.html`.
+
 ## Software
 
-### Mozilla PDF.js 4.10.38
-
-- Files: `assets/vendor/pdfjs/pdf.js`, `assets/vendor/pdfjs/pdf.worker.js`
-- Copyright: Mozilla Foundation and contributors
-- Licence: Apache License 2.0
-- Full text: `assets/vendor/pdfjs/LICENSE`
-- Project: <https://github.com/mozilla/pdf.js>
-
-The files are the "legacy" ESM distribution of PDF.js, vendored without
-modification. They are loaded locally by `assets/js/reader.js`.
-
-### DearFlip 2.5.172 (reader engine)
+### DearFlip 2.5.172 — page-flip engine
 
 - Files: `assets/vendor/dearflip/` (`css/dflip.min.css`, `js/dflip.min.js`,
   `js/jquery.min.js`, `js/libs/pdf.min.js`, `js/libs/pdf.worker.min.js`,
   `js/libs/three.min.js`, `sound/turn2.mp3`)
-- Copyright: DearFlip / its authors
-- Licence: Commercial licence from <https://dearflip.com/> (free for personal,
-  non-commercial use); see the terms published by DearFlip. This project does not
-  relicense DearFlip.
+- Copyright: DearFlip and its authors
+- Licence: commercial licence from <https://dearflip.com/> (free for personal,
+  non-commercial use); see the terms published by DearFlip. This project does
+  not relicense DearFlip.
 - Project: <https://dearflip.com/>
 
 The reader in `flipbook.html` loads these files locally via
-`window.dFlipLocation`. The bundled `pdf.min.js` is Mozilla PDF.js (Apache 2.0)
-and `three.min.js` is three.js (MIT); their upstream notices apply as well.
+`window.dFlipLocation`.
+
+### Mozilla PDF.js
+
+- Files: `assets/vendor/dearflip/js/libs/pdf.min.js`,
+  `assets/vendor/dearflip/js/libs/pdf.worker.min.js`
+- Copyright: Mozilla Foundation and contributors
+- Licence: Apache License 2.0
+- Project: <https://github.com/mozilla/pdf.js>
+
+The files are bundled with DearFlip and served locally.
+
+### three.js
+
+- File: `assets/vendor/dearflip/js/libs/three.min.js`
+- Copyright: three.js authors
+- Licence: MIT
+- Project: <https://threejs.org/>
+
+### jQuery
+
+- File: `assets/vendor/dearflip/js/jquery.min.js`
+- Copyright: OpenJS Foundation and other contributors
+- Licence: MIT
+- Project: <https://jquery.com/>
 
 ## Typefaces
 
 Both font families are self-hosted as WOFF2 files and are used under the SIL
 Open Font License 1.1. The full licence texts are included under
-`assets/fonts/`.
+`assets/fonts/`. The files are reduced subsets of the original families (Latin
+glyphs, weights 400–500) and remain under the same licence.
 
 ### Ibarra Real Nova
 

@@ -4,6 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Reading Room — The Wizarding Library</title>
+  <meta name="description" content="The page-flip reading room for The Wizarding Library.">
+  <meta name="theme-color" content="#091119">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/vendor/dearflip/js/jquery.min.js" as="script">
+  <link rel="preload" href="assets/vendor/dearflip/js/dflip.min.js" as="script">
   <link rel="stylesheet" href="assets/vendor/dearflip/css/dflip.min.css">
   <style>
     html, body { height: 100%; margin: 0; }
@@ -145,7 +150,7 @@
       var nativeFrame = document.getElementById("fb-native");
       var loading = document.getElementById("fb-loading");
 
-      if (!bookId) {
+      if (!bookId || !/^[a-z0-9-]+$/.test(bookId)) {
         document.getElementById("fb-missing-text").innerHTML =
           'Choose a volume from the library to start reading. <a href="index.html">Browse the collection</a>.';
         missing.classList.add("is-visible");
@@ -178,7 +183,7 @@
           if (raw) {
             state = JSON.parse(raw);
           } else {
-            state = { version: 1, lastBook: null, progress: {}, bookmarks: {}, settings: {} };
+            state = { version: 1, lastBook: null, progress: {} };
           }
           if (!state || typeof state !== "object") return;
           if (!state.progress || typeof state.progress !== "object") state.progress = {};

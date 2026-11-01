@@ -254,10 +254,6 @@ export function getCategoryStyle(category) {
   return `--category-color:${meta.color};--category-ink:${meta.ink}`;
 }
 
-export function getBookById(catalogue, bookId) {
-  return catalogue?.books.find((book) => book.id === bookId) || null;
-}
-
 export function getFeaturedBook(catalogue) {
   return catalogue?.books.find((book) => book.featured) || catalogue?.books[0] || null;
 }
@@ -321,13 +317,6 @@ export function sortBooks(books, sort) {
     default:
       return list;
   }
-}
-
-export function getRecentlyAdded(books, limit = 3) {
-  return books
-    .slice()
-    .sort((a, b) => Date.parse(b.addedAt || 0) - Date.parse(a.addedAt || 0))
-    .slice(0, limit);
 }
 
 export function formatMinutes(minutes) {

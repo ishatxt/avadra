@@ -11,6 +11,7 @@
   <meta property="og:type" content="website">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/ibarra-real-nova-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/ibarra-real-nova-italic.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/literata-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/library.css">
@@ -290,8 +291,8 @@
               <h3>Private copies, plainly marked</h3>
               <p>
                 Each record points to a PDF in the <code>books/</code> folder and a
-                cover in <code>assets/covers/</code>. If either file is missing, the
-                page says so instead of failing silently.
+                cover in <code>assets/covers/</code>. A missing cover falls back to a
+                typographic tile; a missing PDF falls back to the browser's own viewer.
               </p>
             </div>
           </div>
@@ -300,9 +301,9 @@
             <div>
               <h3>Your place, kept quietly</h3>
               <p>
-                Reading position, bookmarks, and display preferences are stored in
-                your browser's local storage. Nothing is sent anywhere. Clearing
-                site data clears your place; there is no account to recover.
+                Your reading position is stored in your browser's local storage.
+                Nothing is sent anywhere. Clearing site data clears your place;
+                there is no account to recover.
               </p>
             </div>
           </div>
@@ -325,8 +326,8 @@
           </a>
           <p class="site-footer__note">
             An independent, unofficial reading room for the seven Harry Potter
-            novels, made with HTML, CSS, vanilla JavaScript, and Mozilla PDF.js.
-            No framework, no account, no hurry.
+            novels, made with HTML, CSS, vanilla JavaScript, and a locally served
+            page-turn engine. No framework, no account, no hurry.
           </p>
         </div>
         <div class="site-footer__col">
@@ -342,8 +343,7 @@
           <ul>
             <li><a href="#about">About this shelf</a></li>
             <li><a href="#about">Rights &amp; copies</a></li>
-            <li><a href="README.md">Setup notes</a></li>
-            <li><a href="THIRD-PARTY-NOTICES.md">Third-party notices</a></li>
+            <li><a href="notices.html">Third-party notices</a></li>
           </ul>
         </div>
       </div>
