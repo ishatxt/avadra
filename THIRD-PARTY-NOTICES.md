@@ -18,6 +18,21 @@ any licence granted by this project.
 The files are the "legacy" ESM distribution of PDF.js, vendored without
 modification. They are loaded locally by `assets/js/reader.js`.
 
+### DearFlip 2.5.172 (reader engine)
+
+- Files: `assets/vendor/dearflip/` (`css/dflip.min.css`, `js/dflip.min.js`,
+  `js/jquery.min.js`, `js/libs/pdf.min.js`, `js/libs/pdf.worker.min.js`,
+  `js/libs/three.min.js`, `sound/turn2.mp3`)
+- Copyright: DearFlip / its authors
+- Licence: Commercial licence from <https://dearflip.com/> (free for personal,
+  non-commercial use); see the terms published by DearFlip. This project does not
+  relicense DearFlip.
+- Project: <https://dearflip.com/>
+
+The reader in `flipbook.html` loads these files locally via
+`window.dFlipLocation`. The bundled `pdf.min.js` is Mozilla PDF.js (Apache 2.0)
+and `three.min.js` is three.js (MIT); their upstream notices apply as well.
+
 ## Typefaces
 
 Both font families are self-hosted as WOFF2 files and are used under the SIL

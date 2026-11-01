@@ -64,7 +64,7 @@ function icon(name, className = "") {
 }
 
 function readHref(book) {
-  return `reader.html?book=${encodeURIComponent(book.id)}`;
+  return `flipbook.html?book=${encodeURIComponent(book.id)}`;
 }
 
 function truncated(value, length = 64) {
@@ -441,7 +441,10 @@ function refreshResumeLinks() {
   if (!book || !progress) {
     dom.navResume.hidden = true;
     dom.heroResume.hidden = true;
-    if (dom.footerReader) dom.footerReader.href = "reader.html";
+    const firstBook = state.catalogue.books[0];
+    if (dom.footerReader) {
+      dom.footerReader.href = firstBook ? readHref(firstBook) : "index.html#collection";
+    }
     return;
   }
 

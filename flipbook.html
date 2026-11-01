@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reading Room — The Wizarding Library</title>
+  <link rel="stylesheet" href="assets/vendor/dearflip/css/dflip.min.css">
+  <style>
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: #0b141c;
+      color: #f0e7d6;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    .fb-bar {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      height: 52px;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(198, 161, 91, 0.28);
+      background: rgba(9, 17, 25, 0.96);
+      backdrop-filter: blur(8px);
+    }
+    .fb-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 11px;
+      border: 1px solid rgba(198, 161, 91, 0.4);
+      border-radius: 6px;
+      color: #f0e7d6;
+      font-size: 0.82rem;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .fb-back:hover { background: rgba(198, 161, 91, 0.12); }
+    .fb-title {
+      min-width: 0;
+      overflow: hidden;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 0.98rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .fb-author { color: #9eabae; font-size: 0.76rem; white-space: nowrap; }
+    .fb-stage {
+      position: absolute;
+      inset: 52px 0 0 0;
+    }
+    .fb-stage ._df_book { width: 100%; height: 100%; }
+    .fb-fallback {
+      position: absolute;
+      inset: 52px 0 0 0;
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .fb-fallback.is-visible { display: flex; }
+    .fb-fallback p { margin: 0; color: #9eabae; font-size: 0.85rem; }
+    .fb-fallback iframe {
+      flex: 1;
+      width: 100%;
+      border: 1px solid rgba(198, 161, 91, 0.28);
+      border-radius: 6px;
+      background: #fff;
+    }
+    .fb-missing {
+      position: absolute;
+      inset: 52px 0 0 0;
+      display: none;
+      place-items: center;
+      padding: 24px;
+      text-align: center;
+    }
+    .fb-missing.is-visible { display: grid; }
+    .fb-missing a { color: #c6a15b; }
+    .fb-loading {
+      position: absolute;
+      inset: 52px 0 0 0;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      background: #0b141c;
+      color: #9eabae;
+      font-size: 0.85rem;
+      letter-spacing: 0.04em;
+      transition: opacity 240ms ease;
+    }
+    .fb-loading.is-hidden { opacity: 0; pointer-events: none; }
+    .fb-loading::after {
+      content: "";
+      width: 26px;
+      height: 26px;
+      border: 2px solid rgba(198, 161, 91, 0.25);
+      border-top-color: #c6a15b;
+      border-radius: 50%;
+      animation: fb-spin 900ms linear infinite;
+    }
+    @keyframes fb-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      .fb-loading::after { animation-duration: 2200ms; }
+    }
+  </style>
+</head>
+<body>
+  <header class="fb-bar">
+    <a class="fb-back" href="index.html">&larr; Library</a>
+    <div class="fb-title" id="fb-title">Opening the edition&hellip;</div>
+    <div class="fb-author" id="fb-author"></div>
+  </header>
+
+  <main class="fb-stage" id="fb-stage"></main>
+
+  <div class="fb-loading" id="fb-loading">Preparing your book&hellip;</div>
+
+  <div class="fb-fallback" id="fb-fallback">
+    <p>The animated viewer could not start, so this is the standard PDF view.</p>
+    <iframe id="fb-native" title="PDF"></iframe>
+  </div>
+
+  <div class="fb-missing" id="fb-missing">
+    <p id="fb-missing-text">That book is not in the catalogue. <a href="index.html">Return to the library</a>.</p>
+  </div>
+
+  <script src="assets/vendor/dearflip/js/jquery.min.js"></script>
+  <script>window.dFlipLocation = "assets/vendor/dearflip/";</script>
+  <script src="assets/vendor/dearflip/js/dflip.min.js"></script>
+  <script>
+    (function () {
+      var bookId = new URLSearchParams(window.location.search).get("book");
+      var stage = document.getElementById("fb-stage");
+      var titleEl = document.getElementById("fb-title");
+      var authorEl = document.getElementById("fb-author");
+      var missing = document.getElementById("fb-missing");
+      var fallback = document.getElementById("fb-fallback");
+      var nativeFrame = document.getElementById("fb-native");
+      var loading = document.getElementById("fb-loading");
+
+      if (!bookId) {
+        document.getElementById("fb-missing-text").innerHTML =
+          'Choose a volume from the library to start reading. <a href="index.html">Browse the collection</a>.';
+        missing.classList.add("is-visible");
+        hideLoading();
+        titleEl.textContent = "No book selected";
+        return;
+      }
+
+      var pdfPath = "books/" + encodeURIComponent(bookId) + ".pdf";
+      var STORAGE_KEY = "wizarding-library:v1";
+
+      function readSavedPage() {
+        try {
+          var raw = window.localStorage.getItem(STORAGE_KEY);
+          if (!raw) return null;
+          var state = JSON.parse(raw);
+          var entry = state && state.progress ? state.progress[bookId] : null;
+          var page = entry ? Number(entry.page) : NaN;
+          return page > 1 ? Math.round(page) : null;
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function saveProgress(page, totalPages) {
+        if (!page || !totalPages) return;
+        try {
+          var raw = window.localStorage.getItem(STORAGE_KEY);
+          var state;
+          if (raw) {
+            state = JSON.parse(raw);
+          } else {
+            state = { version: 1, lastBook: null, progress: {}, bookmarks: {}, settings: {} };
+          }
+          if (!state || typeof state !== "object") return;
+          if (!state.progress || typeof state.progress !== "object") state.progress = {};
+          state.lastBook = bookId;
+          state.progress[bookId] = {
+            page: Math.min(page, totalPages),
+            totalPages: totalPages,
+            updatedAt: new Date().toISOString()
+          };
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (error) {
+          /* Storage is optional; never block reading on it. */
+        }
+      }
+
+      function trackProgress() {
+        var lastPage = null;
+        function remember() {
+          var counter = document.querySelector(".df-ui-page");
+          var match = counter ? /(\d+)\s*\/\s*(\d+)/.exec(counter.textContent || "") : null;
+          if (!match) return;
+          var page = Number(match[1]);
+          var total = Number(match[2]);
+          if (!page || !total || page === lastPage) return;
+          lastPage = page;
+          saveProgress(page, total);
+        }
+        window.setInterval(remember, 1500);
+        window.addEventListener("pagehide", remember);
+      }
+
+      // Catalogue is only used for the title bar; it never blocks the reader.
+      fetch("data/catalogue.json")
+        .then(function (response) { return response.json(); })
+        .then(function (list) {
+          var book = (list.books || list).find(function (item) { return item.id === bookId; });
+          if (!book) return;
+          titleEl.textContent = book.title;
+          authorEl.textContent = book.author ? "by " + book.author : "";
+          document.title = book.title + " — The Wizarding Library";
+        })
+        .catch(function () {});
+
+      function createBook() {
+        // Create only after setting the source. DearFlip caches "parsed" state,
+        // so an empty element that is parsed first can never be re-pointed.
+        var book = document.createElement("div");
+        book.className = "_df_book";
+        book.id = "df-" + bookId;
+        book.setAttribute("source", pdfPath);
+        book.setAttribute("webgl", "true");
+        book.setAttribute("height", "100%");
+        book.setAttribute("backgroundcolor", "#0b141c");
+        var savedPage = readSavedPage();
+        if (savedPage) book.setAttribute("page", String(savedPage));
+        stage.appendChild(book);
+      }
+
+      function start() {
+        if (!window.DFLIP || typeof window.DFLIP.parseBooks !== "function") {
+          window.setTimeout(start, 60);
+          return;
+        }
+        window.DFLIP.parseBooks();
+        trackProgress();
+        watchForFailure();
+      }
+
+      function hideLoading() {
+        loading.classList.add("is-hidden");
+        window.setTimeout(function () { loading.style.display = "none"; }, 300);
+      }
+
+      function watchForFailure() {
+        var started = false;
+        var checks = 0;
+        var timer = window.setInterval(function () {
+          checks += 1;
+          // The page counter only appears once the PDF service has parsed the
+          // document and the first spread is ready.
+          if (document.querySelector(".df-ui-page")) {
+            started = true;
+            window.clearInterval(timer);
+            fallback.classList.remove("is-visible");
+            hideLoading();
+          } else if (checks > 250) {
+            window.clearInterval(timer);
+            if (!started) {
+              nativeFrame.src = pdfPath;
+              fallback.classList.add("is-visible");
+              hideLoading();
+            }
+          }
+        }, 100);
+      }
+
+      // Wait for jQuery's ready cycle so DearFlip's own parser runs first.
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", function () {
+          createBook();
+          start();
+        });
+      } else {
+        createBook();
+        start();
+      }
+    })();
+  </script>
+</body>
+</html>

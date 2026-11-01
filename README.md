@@ -1,9 +1,10 @@
 # The Wizarding Library
 
 A small, self-contained reading room for the seven Harry Potter novels, built
-with plain HTML, CSS, and JavaScript. It uses
-[Mozilla PDF.js](https://mozilla.github.io/pdf.js/) to render PDFs in the
-browser and deploys as a static site on GitHub Pages.
+with plain HTML, CSS, and JavaScript. Books open in a page-flip reader powered by
+a locally vendored copy of [DearFlip](https://dearflip.com/) (which bundles
+Mozilla PDF.js and three.js), and the site deploys as a static site on GitHub
+Pages. No request leaves the machine for a third-party CDN.
 
 There is no framework, package manager, build step, or server-side code.
 
@@ -16,13 +17,19 @@ There is no framework, package manager, build step, or server-side code.
 
 - **A seven-volume catalogue** — the novels in reading order, with series
   numbers, publication years, page counts, descriptions, and curator notes.
-- **A custom PDF reader** — scroll mode with lazy page rendering, facing-page
-  Book mode, zoom and fit, fullscreen, focus mode, bookmarks, remembered reading
-  positions, a warm Study theme, and optional page-colour inversion.
-- **Optional reading music** — *Hegwid’s Theme* loops from the reader header,
-  with play/pause, a seek bar, and a saved volume level.
+- **A page-flip reader** — every catalogue link opens `flipbook.html`, which
+  builds a DearFlip book for that PDF: two-page spread, animated page turns,
+  zoom, search, thumbnails, and fullscreen. All DearFlip assets (scripts, worker,
+  page-turn sound) are served from `assets/vendor/dearflip/`.
+- **Resume reading** — the flipbook stores the page it last showed, and the
+  homepage's resume links reopen that page.
+- **A plain fallback** — if the flipbook fails to start, the reader swaps in the
+  browser's native PDF view for the same file.
+- **Optional reading music** — *Hegwid’s Theme* loops from the legacy reader
+  header, with play/pause, a seek bar, and a saved volume level.
 - **A resilient catalogue** — a missing cover falls back to a typographic tile,
-  and a missing PDF shows the exact path to add instead of failing silently.
+  and a missing PDF falls back to the browser's native viewer rather than
+  failing silently.
 - **Local-only personal data** — progress, bookmarks, and display preferences
   are kept in one `localStorage` key. Nothing is sent anywhere.
 
@@ -39,7 +46,7 @@ python3 -m http.server 8000
 Then visit:
 
 - <http://localhost:8000/> — the library
-- <http://localhost:8000/reader.html?book=harry-potter-01-philosophers-stone> — the first book
+- <http://localhost:8000/flipbook.html?book=harry-potter-01-philosophers-stone> — the first book
 
 Any static server works, for example `npx serve .` or `php -S localhost:8000`.
 Opening `index.html` by double-clicking shows an explanatory error instead of the
@@ -134,15 +141,16 @@ python3 -m json.tool data/catalogue.json > /dev/null && echo "JSON OK"
 
 ## Reading music
 
-The reader includes an optional, looping background track at
-`assets/music/hegwids-theme.mp3`. Open the music note in the reader header to
-play or pause it, drag the timeline to seek, and adjust the volume slider. The
-volume is remembered with your other reader settings.
+The legacy reader (`reader.html`) includes an optional, looping background track
+at `assets/music/hegwids-theme.mp3`. Open the music note in that reader's header
+to play or pause it, drag the timeline to seek, and adjust the volume slider. The
+volume is remembered with the other reader settings.
 
 Browsers do not allow audio to start before a user gesture, so the track never
 autoplays. Press `P` once a book is open to toggle playback. To use a different
 track, either replace that file or update the `<audio>` source in
-`reader.html`.
+`reader.html`. The DearFlip reader does not use this track; it plays its own
+page-turn sound from `assets/vendor/dearflip/sound/`.
 
 ## Missing covers and PDFs
 
@@ -151,9 +159,9 @@ fast. Instead:
 
 - A broken or absent cover image is hidden, and the card switches to the
   typographic fallback tile.
-- A PDF is only requested when a volume is opened. If it is missing, the reader
-  says **“This book has not been added yet”** and names the expected path from
-  the catalogue.
+- A PDF is only requested when a volume is opened. If it is missing, DearFlip
+  cannot start; after roughly 25 seconds the reader swaps in the browser's
+  native PDF view, which reports the missing file in the usual browser way.
 - A file:// page and an unreachable catalogue each have their own plain-language
   error state.
 
@@ -168,25 +176,27 @@ repository root or a project subpath.
 
 **Before publishing, decide about the books.** GitHub Pages is public. The
 repository includes a `.gitignore` that keeps `books/*.pdf` out of Git by default,
-so the published site will show the reader's “not added yet” message until you
-add the PDFs privately or accept that they will be public. Do not commit or
-publish the novels or cover art unless you have the right to do so.
+so the published site will not have the novels until you add the PDFs privately
+or accept that they will be public. Do not commit or publish the novels or cover
+art unless you have the right to do so.
 
 ## Project structure
 
 ```text
 HP/
 ├── index.html                 Homepage and catalogue shell
-├── reader.html                PDF reader shell
+├── flipbook.html              Default DearFlip reader (reads ?book=<id>)
+├── reader.html                Legacy custom PDF.js reader
 ├── data/catalogue.json        Seven catalogue records
 ├── books/                     Seven personal PDFs (ignored by Git)
 ├── assets/
 │   ├── covers/                Seven cover images
-│   ├── music/                 hegwids-theme.mp3 (reading music)
+│   ├── music/                 hegwids-theme.mp3 (legacy reader music)
 │   ├── css/                   base.css, library.css, reader.css
 │   ├── fonts/                 Self-hosted WOFF2 files and licences
 │   ├── js/                    app.js, catalogue.js, reader.js, storage.js
-│   ├── vendor/pdfjs/          Local PDF.js 4.10.38
+│   ├── vendor/pdfjs/          Local PDF.js 4.10.38 (legacy reader)
+│   ├── vendor/dearflip/       Local DearFlip: css, js + libs, sound
 │   ├── favicon.svg
 │   └── icons.svg
 ├── README.md
@@ -201,14 +211,17 @@ With the local server running:
 1. Load the homepage and confirm the ledger says **Seven novels** and the
    collection shows exactly seven cards.
 2. Search for `Azkaban`, filter by **Harry Potter**, and sort by **Reading order**.
-3. Open a details dialog, start reading, turn a page, bookmark it, reload, and
-   confirm the reader returns to the same place.
-4. Open the music note in the reader header, press play, drag the seek bar, and
-   set a volume. Reload and confirm the volume is remembered.
-5. Temporarily rename one PDF and open that book. The reader should name the
-   missing path and offer **Try again**. Rename it back afterwards.
+3. Open a details dialog and start reading. The flipbook should show the cover
+   with a `1/…` page counter; turn a page, try search and fullscreen, and return
+   to the library with the back link.
+4. Open `reader.html?book=harry-potter-01-philosophers-stone` for the legacy
+   reader, press play in the music panel, and confirm the volume is remembered
+   after a reload.
+5. Temporarily rename one PDF and open that book. The flipbook cannot start, so
+   after about 25 seconds the native PDF view appears with the browser's own
+   missing-file message. Rename it back afterwards.
 6. Check a narrow window: the navigation collapses, the cards stack, and the
-   reader toolbar remains usable.
+   flipbook toolbar remains usable.
 
 ## Rights and privacy
 
