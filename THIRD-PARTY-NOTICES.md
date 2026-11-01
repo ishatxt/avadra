@@ -74,14 +74,15 @@ glyphs, weights 400–500) and remain under the same licence.
 
 ## Book files and cover images
 
-The seven PDFs and seven cover images in this working copy are personal files.
-They are not part of the open-source software above and are not licensed for
-redistribution by this project.
+The seven PDFs and seven cover images served with this site are personal copies.
+They are not covered by the open-source software above and are not offered for
+reuse or redistribution.
 
 Harry Potter and all related names, characters, publications, and artwork belong
 to J. K. Rowling, Bloomsbury, Scholastic, Warner Bros., and their respective
 rights holders. This site is an unofficial, non-commercial fan project. It is not
 endorsed by or affiliated with any of those rights holders.
 
-Do not publish the PDFs or cover art unless you have the right to do so. The
-site's code, layout, and editorial notes are original to this project.
+If you copy or redeploy this site, do not republish the novels or cover art
+unless you have the right to do so. The site's code, layout, and editorial notes
+are original to this project.

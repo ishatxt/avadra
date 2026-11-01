@@ -9,9 +9,9 @@ Pages; no request leaves the machine for a third-party CDN.
 There is no framework, package manager, build step, or server-side code.
 
 > This is an unofficial personal project. It is not affiliated with J. K. Rowling,
-> Bloomsbury, Scholastic, Warner Bros., or any other rights holder. The PDFs and
-> cover images are personal copies; do not publish or redistribute them unless you
-> have the right to do so.
+> Bloomsbury, Scholastic, Warner Bros., or any other rights holder. This
+> deployment includes personal copies of the novels and cover art; they remain
+> the property of their rights holders and are not offered for reuse.
 
 ## What is here
 
@@ -161,7 +161,7 @@ HP/
 ├── notices.html               Third-party licences and rights
 ├── 404.html                   GitHub Pages not-found page
 ├── data/catalogue.json        Seven catalogue records
-├── books/                     Seven personal PDFs (ignored by Git)
+├── books/                     Seven PDFs served with the site
 ├── assets/
 │   ├── covers/                Seven WebP cover images
 │   ├── css/                   base.css, library.css, pages.css
@@ -191,11 +191,11 @@ project subpath (`username.github.io/repo/`) without changes.
 GitHub Pages is a static host: there is no server code, no environment
 variables, and no custom headers. Everything here works within those limits.
 
-**Before publishing, decide about the books.** GitHub Pages is public. The
-repository includes a `.gitignore` that keeps `books/*.pdf` out of Git by
-default, so a published copy serves the site without the novels; the reader then
-falls back to the browser's native viewer, which reports the missing file. Do not
-commit or publish the novels or cover art unless you have the right to do so.
+**The books are part of this deployment.** The seven PDFs in `books/` and the
+covers in `assets/covers/` are committed and served publicly by GitHub Pages. If
+you fork or redeploy the site, make sure you have the right to redistribute
+them. If a PDF is absent, the reader shows a direct notice; if DearFlip fails for
+another reason, it falls back to the browser's PDF viewer.
 
 ## Checks
 
