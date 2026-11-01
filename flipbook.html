@@ -80,11 +80,21 @@
       inset: 52px 0 0 0;
       display: none;
       place-items: center;
+      align-content: center;
+      gap: 4px;
       padding: 24px;
       text-align: center;
     }
     .fb-missing.is-visible { display: grid; }
     .fb-missing a { color: #c6a15b; }
+    .fb-missing p {
+      max-width: 46ch;
+      margin: 0 auto 10px;
+      line-height: 1.6;
+    }
+    .fb-missing p:last-child { margin-bottom: 0; }
+    .fb-missing strong { color: #f0e7d6; }
+    .fb-missing code { color: #c6a15b; }
     .fb-loading {
       position: absolute;
       inset: 52px 0 0 0;
@@ -149,6 +159,7 @@
       var fallback = document.getElementById("fb-fallback");
       var nativeFrame = document.getElementById("fb-native");
       var loading = document.getElementById("fb-loading");
+      var unavailable = false;
 
       if (!bookId || !/^[a-z0-9-]+$/.test(bookId)) {
         document.getElementById("fb-missing-text").innerHTML =
@@ -257,10 +268,40 @@
         window.setTimeout(function () { loading.style.display = "none"; }, 300);
       }
 
+      function showUnavailable() {
+        if (unavailable) return;
+        unavailable = true;
+        stage.innerHTML = "";
+        fallback.classList.remove("is-visible");
+        nativeFrame.removeAttribute("src");
+        missing.innerHTML =
+          "<p><strong>This edition is not included in this copy.</strong></p>" +
+          "<p>The page-flip reader needs the book's PDF file, and this copy does " +
+          "not have it. Add the PDF to <code>books/</code> to read it here, or " +
+          "return to the library.</p>" +
+          '<p><a href="index.html">Return to the library</a></p>';
+        missing.classList.add("is-visible");
+        hideLoading();
+      }
+
+      function checkAvailability() {
+        fetch(pdfPath, { method: "HEAD", cache: "no-store" })
+          .then(function (response) {
+            if (response.status === 404 || response.status === 403) showUnavailable();
+          })
+          .catch(function () {
+            /* If the check itself fails, let DearFlip try and use the fallback. */
+          });
+      }
+
       function watchForFailure() {
         var started = false;
         var checks = 0;
         var timer = window.setInterval(function () {
+          if (unavailable) {
+            window.clearInterval(timer);
+            return;
+          }
           checks += 1;
           // The page counter only appears once the PDF service has parsed the
           // document and the first spread is ready.
@@ -285,10 +326,12 @@
         document.addEventListener("DOMContentLoaded", function () {
           createBook();
           start();
+          checkAvailability();
         });
       } else {
         createBook();
         start();
+        checkAvailability();
       }
     })();
   </script>
