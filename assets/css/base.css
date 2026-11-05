@@ -1,5 +1,5 @@
 /* ==========================================================================
-   The Wizarding Library — design tokens, typography, primitives
+   AVADRA — design tokens, typography, primitives
    ========================================================================== */
 
 @font-face {
@@ -65,8 +65,12 @@
   --ink-on-paper: #211e18;
   --muted-on-paper: #6b6153;
 
-  --cat-harry-potter: #c9a96a;
-  --cat-harry-potter-ink: #7a5a2a;
+  --cat-open-shelf: #c6a15b;
+  --cat-open-shelf-ink: #7a5a2a;
+  --cat-private-editions: #a8785a;
+  --cat-private-editions-ink: #7c4c36;
+  --cat-local: #8aa7b8;
+  --cat-local-ink: #4f6f80;
 
   --container: 1240px;
   --gutter: clamp(20px, 4.5vw, 64px);
@@ -289,6 +293,13 @@ img {
 .text-link:hover {
   border-color: var(--gold-bright);
   color: var(--ivory-strong);
+}
+
+.text-link:disabled,
+.text-link[disabled] {
+  opacity: 0.48;
+  border-color: transparent;
+  cursor: not-allowed;
 }
 
 .text-link svg {

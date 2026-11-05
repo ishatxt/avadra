@@ -3,337 +3,388 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Reading Room — The Wizarding Library</title>
-  <meta name="description" content="The page-flip reading room for The Wizarding Library.">
-  <meta name="theme-color" content="#091119">
+  <title>Reading room — AVADRA</title>
+  <meta name="description" content="The AVADRA reading room: a local-first PDF reader with a two-page 3D flipbook view, single-page mode, RTL reading, bookmarks, search, thumbnails, and a place that remembers where you stopped.">
+  <meta name="theme-color" content="#070d14">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="preload" href="assets/vendor/dearflip/js/jquery.min.js" as="script">
-  <link rel="preload" href="assets/vendor/dearflip/js/dflip.min.js" as="script">
-  <link rel="stylesheet" href="assets/vendor/dearflip/css/dflip.min.css">
-  <style>
-    html, body { height: 100%; margin: 0; }
-    body {
-      background: #0b141c;
-      color: #f0e7d6;
-      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-    }
-    .fb-bar {
-      position: fixed;
-      inset: 0 0 auto 0;
-      z-index: 10000;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      height: 52px;
-      padding: 0 16px;
-      border-bottom: 1px solid rgba(198, 161, 91, 0.28);
-      background: rgba(9, 17, 25, 0.96);
-      backdrop-filter: blur(8px);
-    }
-    .fb-back {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 11px;
-      border: 1px solid rgba(198, 161, 91, 0.4);
-      border-radius: 6px;
-      color: #f0e7d6;
-      font-size: 0.82rem;
-      text-decoration: none;
-      white-space: nowrap;
-    }
-    .fb-back:hover { background: rgba(198, 161, 91, 0.12); }
-    .fb-title {
-      min-width: 0;
-      overflow: hidden;
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: 0.98rem;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .fb-author { color: #9eabae; font-size: 0.76rem; white-space: nowrap; }
-    .fb-stage {
-      position: absolute;
-      inset: 52px 0 0 0;
-    }
-    .fb-stage ._df_book { width: 100%; height: 100%; }
-    .fb-fallback {
-      position: absolute;
-      inset: 52px 0 0 0;
-      display: none;
-      flex-direction: column;
-      gap: 12px;
-      padding: 16px;
-      box-sizing: border-box;
-    }
-    .fb-fallback.is-visible { display: flex; }
-    .fb-fallback p { margin: 0; color: #9eabae; font-size: 0.85rem; }
-    .fb-fallback iframe {
-      flex: 1;
-      width: 100%;
-      border: 1px solid rgba(198, 161, 91, 0.28);
-      border-radius: 6px;
-      background: #fff;
-    }
-    .fb-missing {
-      position: absolute;
-      inset: 52px 0 0 0;
-      display: none;
-      place-items: center;
-      align-content: center;
-      gap: 4px;
-      padding: 24px;
-      text-align: center;
-    }
-    .fb-missing.is-visible { display: grid; }
-    .fb-missing a { color: #c6a15b; }
-    .fb-missing p {
-      max-width: 46ch;
-      margin: 0 auto 10px;
-      line-height: 1.6;
-    }
-    .fb-missing p:last-child { margin-bottom: 0; }
-    .fb-missing strong { color: #f0e7d6; }
-    .fb-missing code { color: #c6a15b; }
-    .fb-loading {
-      position: absolute;
-      inset: 52px 0 0 0;
-      z-index: 20;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 18px;
-      background: #0b141c;
-      color: #9eabae;
-      font-size: 0.85rem;
-      letter-spacing: 0.04em;
-      transition: opacity 240ms ease;
-    }
-    .fb-loading.is-hidden { opacity: 0; pointer-events: none; }
-    .fb-loading::after {
-      content: "";
-      width: 26px;
-      height: 26px;
-      border: 2px solid rgba(198, 161, 91, 0.25);
-      border-top-color: #c6a15b;
-      border-radius: 50%;
-      animation: fb-spin 900ms linear infinite;
-    }
-    @keyframes fb-spin { to { transform: rotate(360deg); } }
-    @media (prefers-reduced-motion: reduce) {
-      .fb-loading::after { animation-duration: 2200ms; }
-    }
-  </style>
-</head>
-<body>
-  <header class="fb-bar">
-    <a class="fb-back" href="index.html">&larr; Library</a>
-    <div class="fb-title" id="fb-title">Opening the edition&hellip;</div>
-    <div class="fb-author" id="fb-author"></div>
-  </header>
-
-  <main class="fb-stage" id="fb-stage"></main>
-
-  <div class="fb-loading" id="fb-loading">Preparing your book&hellip;</div>
-
-  <div class="fb-fallback" id="fb-fallback">
-    <p>The animated viewer could not start, so this is the standard PDF view.</p>
-    <iframe id="fb-native" title="PDF"></iframe>
-  </div>
-
-  <div class="fb-missing" id="fb-missing">
-    <p id="fb-missing-text">That book is not in the catalogue. <a href="index.html">Return to the library</a>.</p>
-  </div>
-
-  <script src="assets/vendor/dearflip/js/jquery.min.js"></script>
-  <script>window.dFlipLocation = "assets/vendor/dearflip/";</script>
-  <script src="assets/vendor/dearflip/js/dflip.min.js"></script>
   <script>
     (function () {
-      var bookId = new URLSearchParams(window.location.search).get("book");
-      var stage = document.getElementById("fb-stage");
-      var titleEl = document.getElementById("fb-title");
-      var authorEl = document.getElementById("fb-author");
-      var missing = document.getElementById("fb-missing");
-      var fallback = document.getElementById("fb-fallback");
-      var nativeFrame = document.getElementById("fb-native");
-      var loading = document.getElementById("fb-loading");
-      var unavailable = false;
-
-      if (!bookId || !/^[a-z0-9-]+$/.test(bookId)) {
-        document.getElementById("fb-missing-text").innerHTML =
-          'Choose a volume from the library to start reading. <a href="index.html">Browse the collection</a>.';
-        missing.classList.add("is-visible");
-        hideLoading();
-        titleEl.textContent = "No book selected";
-        return;
-      }
-
-      var pdfPath = "books/" + encodeURIComponent(bookId) + ".pdf";
-      var STORAGE_KEY = "wizarding-library:v1";
-
-      function readSavedPage() {
-        try {
-          var raw = window.localStorage.getItem(STORAGE_KEY);
-          if (!raw) return null;
-          var state = JSON.parse(raw);
-          var entry = state && state.progress ? state.progress[bookId] : null;
-          var page = entry ? Number(entry.page) : NaN;
-          return page > 1 ? Math.round(page) : null;
-        } catch (error) {
-          return null;
+      try {
+        var raw = localStorage.getItem("avadra:library:v2");
+        var theme = "midnight";
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          var saved = parsed && parsed.preferences && parsed.preferences.theme;
+          if (saved === "parchment" || saved === "dark" || saved === "midnight") theme = saved;
         }
-      }
-
-      function saveProgress(page, totalPages) {
-        if (!page || !totalPages) return;
-        try {
-          var raw = window.localStorage.getItem(STORAGE_KEY);
-          var state;
-          if (raw) {
-            state = JSON.parse(raw);
-          } else {
-            state = { version: 1, lastBook: null, progress: {} };
-          }
-          if (!state || typeof state !== "object") return;
-          if (!state.progress || typeof state.progress !== "object") state.progress = {};
-          state.lastBook = bookId;
-          state.progress[bookId] = {
-            page: Math.min(page, totalPages),
-            totalPages: totalPages,
-            updatedAt: new Date().toISOString()
-          };
-          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        } catch (error) {
-          /* Storage is optional; never block reading on it. */
-        }
-      }
-
-      function trackProgress() {
-        var lastPage = null;
-        function remember() {
-          var counter = document.querySelector(".df-ui-page");
-          var match = counter ? /(\d+)\s*\/\s*(\d+)/.exec(counter.textContent || "") : null;
-          if (!match) return;
-          var page = Number(match[1]);
-          var total = Number(match[2]);
-          if (!page || !total || page === lastPage) return;
-          lastPage = page;
-          saveProgress(page, total);
-        }
-        window.setInterval(remember, 1500);
-        window.addEventListener("pagehide", remember);
-      }
-
-      // Catalogue is only used for the title bar; it never blocks the reader.
-      fetch("data/catalogue.json")
-        .then(function (response) { return response.json(); })
-        .then(function (list) {
-          var book = (list.books || list).find(function (item) { return item.id === bookId; });
-          if (!book) return;
-          titleEl.textContent = book.title;
-          authorEl.textContent = book.author ? "by " + book.author : "";
-          document.title = book.title + " — The Wizarding Library";
-        })
-        .catch(function () {});
-
-      function createBook() {
-        // Create only after setting the source. DearFlip caches "parsed" state,
-        // so an empty element that is parsed first can never be re-pointed.
-        var book = document.createElement("div");
-        book.className = "_df_book";
-        book.id = "df-" + bookId;
-        book.setAttribute("source", pdfPath);
-        book.setAttribute("webgl", "true");
-        book.setAttribute("height", "100%");
-        book.setAttribute("backgroundcolor", "#0b141c");
-        var savedPage = readSavedPage();
-        if (savedPage) book.setAttribute("page", String(savedPage));
-        stage.appendChild(book);
-      }
-
-      function start() {
-        if (!window.DFLIP || typeof window.DFLIP.parseBooks !== "function") {
-          window.setTimeout(start, 60);
-          return;
-        }
-        window.DFLIP.parseBooks();
-        trackProgress();
-        watchForFailure();
-      }
-
-      function hideLoading() {
-        loading.classList.add("is-hidden");
-        window.setTimeout(function () { loading.style.display = "none"; }, 300);
-      }
-
-      function showUnavailable() {
-        if (unavailable) return;
-        unavailable = true;
-        stage.innerHTML = "";
-        fallback.classList.remove("is-visible");
-        nativeFrame.removeAttribute("src");
-        missing.innerHTML =
-          "<p><strong>This edition is not included in this copy.</strong></p>" +
-          "<p>The page-flip reader needs the book's PDF file, and this copy does " +
-          "not have it. Add the PDF to <code>books/</code> to read it here, or " +
-          "return to the library.</p>" +
-          '<p><a href="index.html">Return to the library</a></p>';
-        missing.classList.add("is-visible");
-        hideLoading();
-      }
-
-      function checkAvailability() {
-        fetch(pdfPath, { method: "HEAD", cache: "no-store" })
-          .then(function (response) {
-            if (response.status === 404 || response.status === 403) showUnavailable();
-          })
-          .catch(function () {
-            /* If the check itself fails, let DearFlip try and use the fallback. */
-          });
-      }
-
-      function watchForFailure() {
-        var started = false;
-        var checks = 0;
-        var timer = window.setInterval(function () {
-          if (unavailable) {
-            window.clearInterval(timer);
-            return;
-          }
-          checks += 1;
-          // The page counter only appears once the PDF service has parsed the
-          // document and the first spread is ready.
-          if (document.querySelector(".df-ui-page")) {
-            started = true;
-            window.clearInterval(timer);
-            fallback.classList.remove("is-visible");
-            hideLoading();
-          } else if (checks > 250) {
-            window.clearInterval(timer);
-            if (!started) {
-              nativeFrame.src = pdfPath;
-              fallback.classList.add("is-visible");
-              hideLoading();
-            }
-          }
-        }, 100);
-      }
-
-      // Wait for jQuery's ready cycle so DearFlip's own parser runs first.
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", function () {
-          createBook();
-          start();
-          checkAvailability();
-        });
-      } else {
-        createBook();
-        start();
-        checkAvailability();
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme === "parchment" ? "light" : "dark";
+      } catch (error) {
+        document.documentElement.dataset.theme = "midnight";
       }
     })();
   </script>
+  <link rel="preload" href="assets/fonts/ibarra-real-nova-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/ibarra-real-nova-italic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/literata-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/vendor/pdfjs/pdf.min.js" as="script">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/reader.css">
+  <script type="module" src="assets/js/reader.js"></script>
+</head>
+<body class="reader-page" data-reader-state="boot">
+  <div class="reader-app" id="reader-app">
+    <header class="reader-top" id="reader-top">
+      <div class="reader-top__left">
+        <a class="reader-icon-btn reader-back" href="index.html" aria-label="Back to the AVADRA library" title="Back to the library">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-arrow-left"></use></svg>
+        </a>
+        <div class="reader-title">
+          <p class="reader-title__eyebrow">AVADRA</p>
+          <p class="reader-title__name" id="reader-book-title">Reading room</p>
+          <p class="reader-title__author" id="reader-book-author">Choose a volume or open a PDF</p>
+        </div>
+      </div>
+      <div class="reader-top__right">
+        <button class="reader-icon-btn" type="button" data-action="search" data-reader-only aria-label="Search inside this book" title="Search (Ctrl+F)">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-search"></use></svg>
+        </button>
+        <button class="reader-icon-btn" type="button" data-action="pages" data-reader-only aria-label="Page thumbnails" title="Pages (T)">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-thumbnails"></use></svg>
+        </button>
+        <button class="reader-icon-btn" type="button" data-action="bookmark" data-reader-only aria-label="Bookmark this page" aria-pressed="false" title="Bookmark (B)">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-bookmark"></use></svg>
+        </button>
+        <button class="reader-icon-btn" type="button" data-action="toggle-layout" aria-label="Switch to single-page view" aria-pressed="true" title="Switch to single-page view (V)">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-book-open"></use></svg>
+        </button>
+        <button class="reader-icon-btn" type="button" data-action="theme" aria-label="Change reading theme" title="Theme (M)">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-moon"></use></svg>
+        </button>
+        <button class="reader-icon-btn" type="button" data-action="settings" aria-label="Reader settings" title="Settings (S)">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-settings"></use></svg>
+        </button>
+        <button class="reader-icon-btn" type="button" data-action="fullscreen" aria-label="Enter fullscreen" title="Fullscreen (F)">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-fullscreen"></use></svg>
+        </button>
+        <button class="reader-icon-btn" type="button" data-action="hide-controls" aria-label="Hide controls" title="Hide controls (C)">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-eye-off"></use></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="reader-progress" aria-hidden="true">
+      <span id="reader-progress-fill"></span>
+    </div>
+
+    <div class="reader-viewport">
+      <main class="reader-stage" id="reader-stage" aria-label="Book pages">
+        <div class="reader-page-wrap" id="reader-page-wrap">
+          <canvas id="pdf-canvas" role="img" aria-label="No page loaded"></canvas>
+          <div class="reader-leaf" id="reader-leaf" aria-hidden="true" hidden>
+            <div class="reader-leaf__face reader-leaf__face--front">
+              <canvas id="pdf-leaf-front"></canvas>
+            </div>
+            <div class="reader-leaf__face reader-leaf__face--back">
+              <canvas id="pdf-leaf-back"></canvas>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <div class="reader-render-loading" id="reader-render-loading" hidden>
+        <span class="reader-spinner" aria-hidden="true"></span>
+        <span>Rendering page…</span>
+      </div>
+
+      <button class="reader-arrow reader-arrow--prev" type="button" data-action="prev" data-reader-only aria-label="Previous page">
+        <svg aria-hidden="true"><use href="assets/icons.svg#icon-chevron-left"></use></svg>
+      </button>
+      <button class="reader-arrow reader-arrow--next" type="button" data-action="next" data-reader-only aria-label="Next page">
+        <svg aria-hidden="true"><use href="assets/icons.svg#icon-chevron-right"></use></svg>
+      </button>
+
+      <button class="reader-show-controls" type="button" id="reader-show-controls" data-action="show-controls" hidden>
+        <svg aria-hidden="true"><use href="assets/icons.svg#icon-eye"></use></svg>
+        <span>Show controls</span>
+      </button>
+
+      <div class="reader-state-panel" id="reader-state" hidden></div>
+
+      <div class="reader-loading" id="reader-loading" hidden>
+        <div class="reader-loading__card">
+          <svg class="reader-loading__seal" viewBox="0 0 64 64" aria-hidden="true">
+            <circle cx="32" cy="32" r="30" fill="none" stroke="currentColor" stroke-width=".7"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="currentColor" stroke-width=".35" opacity=".55"/>
+            <path d="M32 15.5 44.5 48M32 15.5 19.5 48M24.4 37.5h15.2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M46.5 10.5c.35 2.6 1.55 3.8 4.1 4.15-2.55.35-3.75 1.55-4.1 4.15-.35-2.6-1.55-3.8-4.1-4.15 2.55-.35 3.75-1.55 4.1-4.15Z" fill="currentColor"/>
+          </svg>
+          <p class="reader-loading__kicker">AVADRA</p>
+          <p class="reader-loading__title" id="reader-loading-title">Opening the volume…</p>
+          <div class="reader-loading__bar" id="reader-loading-bar" aria-hidden="true">
+            <span id="reader-loading-fill"></span>
+          </div>
+          <p class="reader-loading__status" id="reader-loading-status" role="status"></p>
+          <button class="text-link" type="button" data-action="cancel-load">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="reader-bottom" id="reader-bottom">
+      <div class="reader-bottom__left">
+        <button class="reader-icon-btn" type="button" data-action="prev" data-reader-only aria-label="Previous page">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-chevron-left"></use></svg>
+        </button>
+        <div class="reader-page-field">
+          <label class="visually-hidden" for="page-input">Page number</label>
+          <input id="page-input" type="number" min="1" value="1" inputmode="numeric" autocomplete="off" data-reader-only>
+          <span class="reader-page-total">/ <span id="page-total">0</span></span>
+        </div>
+        <button class="reader-icon-btn" type="button" data-action="next" data-reader-only aria-label="Next page">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-chevron-right"></use></svg>
+        </button>
+      </div>
+
+      <div class="reader-slider">
+        <label class="visually-hidden" for="page-slider">Jump to page</label>
+        <input id="page-slider" type="range" min="1" max="1" value="1" step="1" data-reader-only>
+      </div>
+
+      <div class="reader-bottom__right">
+        <button class="reader-icon-btn" type="button" data-action="zoom-out" data-reader-only aria-label="Zoom out" title="Zoom out (−)">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-zoom-out"></use></svg>
+        </button>
+        <span class="reader-zoom-label" id="zoom-label">100%</span>
+        <button class="reader-icon-btn" type="button" data-action="zoom-in" data-reader-only aria-label="Zoom in" title="Zoom in (+)">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-zoom-in"></use></svg>
+        </button>
+        <button class="reader-icon-btn" type="button" data-action="fit-width" data-reader-only aria-label="Fit page to width" title="Fit width (0)">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-fit-width"></use></svg>
+        </button>
+        <button class="reader-icon-btn" type="button" data-action="fit-page" data-reader-only aria-label="Fit page to screen" title="Fit page">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-fit-page"></use></svg>
+        </button>
+        <span class="reader-bottom__divider" aria-hidden="true"></span>
+        <button class="reader-icon-btn" type="button" data-action="bookmark" data-reader-only aria-label="Bookmark this page" aria-pressed="false">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-bookmark"></use></svg>
+        </button>
+        <button class="reader-icon-btn" type="button" data-action="settings" aria-label="Reader settings">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-settings"></use></svg>
+        </button>
+      </div>
+    </footer>
+
+    <div class="reader-scrim" id="reader-scrim" hidden></div>
+
+    <aside class="reader-drawer" id="reader-drawer" aria-hidden="true" aria-label="Reader panel" inert>
+      <div class="reader-drawer__head">
+        <div class="reader-tabs" role="tablist" aria-label="Reader panel">
+          <button class="reader-tab" type="button" role="tab" id="tab-pages" data-panel="pages" aria-selected="true" aria-controls="panel-pages">Pages</button>
+          <button class="reader-tab" type="button" role="tab" id="tab-search" data-panel="search" aria-selected="false" aria-controls="panel-search">Search</button>
+          <button class="reader-tab" type="button" role="tab" id="tab-bookmarks" data-panel="bookmarks" aria-selected="false" aria-controls="panel-bookmarks">Bookmarks</button>
+          <button class="reader-tab" type="button" role="tab" id="tab-settings" data-panel="settings" aria-selected="false" aria-controls="panel-settings">Settings</button>
+        </div>
+        <button class="reader-icon-btn" type="button" data-action="close-drawer" aria-label="Close panel">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-x"></use></svg>
+        </button>
+      </div>
+
+      <div class="reader-drawer__body" id="reader-drawer-body">
+        <section class="reader-panel" id="panel-pages" role="tabpanel" aria-labelledby="tab-pages" data-panel-section="pages">
+          <div class="reader-panel__section" id="reader-outline-section" hidden>
+            <h2 class="reader-panel__heading">Contents</h2>
+            <div class="reader-outline" id="reader-outline"></div>
+          </div>
+          <div class="reader-panel__section">
+            <h2 class="reader-panel__heading">Pages</h2>
+            <div class="reader-thumbs" id="reader-thumbs"></div>
+          </div>
+        </section>
+
+        <section class="reader-panel" id="panel-search" role="tabpanel" aria-labelledby="tab-search" data-panel-section="search" hidden>
+          <form class="reader-search-form" id="reader-search-form" role="search">
+            <label class="visually-hidden" for="reader-search-input">Search inside this book</label>
+            <div class="reader-search-field">
+              <svg aria-hidden="true"><use href="assets/icons.svg#icon-search"></use></svg>
+              <input id="reader-search-input" type="search" placeholder="Search inside this book" autocomplete="off" spellcheck="false">
+              <button class="reader-icon-btn" type="button" data-action="clear-search" aria-label="Clear search">
+                <svg aria-hidden="true"><use href="assets/icons.svg#icon-x"></use></svg>
+              </button>
+            </div>
+            <button class="btn btn--gold reader-search-submit" type="submit">Search</button>
+          </form>
+          <p class="reader-search-status" id="reader-search-status" aria-live="polite">
+            Search the full text of this PDF. Results jump straight to the page.
+          </p>
+          <div class="reader-search-results" id="reader-search-results"></div>
+        </section>
+
+        <section class="reader-panel" id="panel-bookmarks" role="tabpanel" aria-labelledby="tab-bookmarks" data-panel-section="bookmarks" hidden>
+          <div class="reader-panel__heading-row">
+            <h2 class="reader-panel__heading">Bookmarks</h2>
+            <button class="text-link" type="button" data-action="bookmark" data-reader-only>Bookmark this page</button>
+          </div>
+          <div class="reader-bookmarks" id="reader-bookmarks"></div>
+        </section>
+
+        <section class="reader-panel" id="panel-settings" role="tabpanel" aria-labelledby="tab-settings" data-panel-section="settings" hidden>
+          <div class="reader-settings-group">
+            <h3>Theme</h3>
+            <div class="reader-segmented reader-theme-options" role="group" aria-label="Reader theme">
+              <button type="button" data-theme-option="midnight" aria-pressed="true">
+                <span class="reader-theme-swatch reader-theme-swatch--midnight" aria-hidden="true"></span>
+                Midnight
+              </button>
+              <button type="button" data-theme-option="parchment" aria-pressed="false">
+                <span class="reader-theme-swatch reader-theme-swatch--parchment" aria-hidden="true"></span>
+                Parchment
+              </button>
+              <button type="button" data-theme-option="dark" aria-pressed="false">
+                <span class="reader-theme-swatch reader-theme-swatch--dark" aria-hidden="true"></span>
+                Dark
+              </button>
+            </div>
+          </div>
+
+          <div class="reader-settings-group">
+            <h3>Reading width</h3>
+            <div class="reader-segmented reader-width-options" role="group" aria-label="Reading width">
+              <button type="button" data-width-option="narrow" aria-pressed="false">Narrow</button>
+              <button type="button" data-width-option="comfortable" aria-pressed="true">Comfortable</button>
+              <button type="button" data-width-option="wide" aria-pressed="false">Wide</button>
+              <button type="button" data-width-option="full" aria-pressed="false">Full</button>
+            </div>
+          </div>
+
+          <div class="reader-settings-group">
+            <h3>Page fit</h3>
+            <div class="reader-segmented reader-fit-options" role="group" aria-label="Page fit">
+              <button type="button" data-fit-option="width" aria-pressed="true">Fit width</button>
+              <button type="button" data-fit-option="page" aria-pressed="false">Fit page</button>
+            </div>
+          </div>
+
+          <div class="reader-settings-group">
+            <h3>Page layout</h3>
+            <div class="reader-segmented reader-layout-options" role="group" aria-label="Page layout">
+              <button type="button" data-layout-option="single" aria-pressed="false">Single page</button>
+              <button type="button" data-layout-option="book" aria-pressed="true">Two-page book</button>
+            </div>
+            <p class="reader-settings-hint" id="layout-hint">Cover, then facing pages side by side.</p>
+          </div>
+
+          <div class="reader-settings-group">
+            <h3>Reading direction</h3>
+            <div class="reader-segmented reader-direction-options" role="group" aria-label="Reading direction">
+              <button type="button" data-direction-option="ltr" aria-pressed="true">Left to right</button>
+              <button type="button" data-direction-option="rtl" aria-pressed="false">Right to left</button>
+            </div>
+            <p class="reader-settings-hint">Swaps the facing pages and navigation arrows. Used in the two-page book view.</p>
+          </div>
+
+          <div class="reader-settings-group">
+            <h3>Page effect</h3>
+            <div class="reader-segmented reader-effect-options" role="group" aria-label="Page effect">
+              <button type="button" data-effect-option="3d" aria-pressed="true">3D page turn</button>
+              <button type="button" data-effect-option="2d" aria-pressed="false">2D fade</button>
+            </div>
+            <p class="reader-settings-hint">Used when page transitions are on.</p>
+          </div>
+
+          <div class="reader-settings-group">
+            <label class="reader-slider-label" for="brightness-input">
+              Page brightness
+              <span id="brightness-value">95%</span>
+            </label>
+            <input id="brightness-input" type="range" min="70" max="110" step="1" value="95">
+          </div>
+
+          <div class="reader-settings-group">
+            <label class="reader-switch">
+              <span>Focus mode <small>Hide the chrome and keep the page</small></span>
+              <input type="checkbox" id="focus-toggle">
+              <span class="reader-switch__track" aria-hidden="true"></span>
+            </label>
+            <label class="reader-switch">
+              <span>Page transitions <small>Animated page turns</small></span>
+              <input type="checkbox" id="animations-toggle" checked>
+              <span class="reader-switch__track" aria-hidden="true"></span>
+            </label>
+          </div>
+
+          <div class="reader-settings-group">
+            <h3>This copy</h3>
+            <div class="reader-copy-info" id="reader-copy-info"></div>
+            <div class="reader-settings-actions">
+              <button class="btn btn--ghost" type="button" data-action="open-file">
+                <svg aria-hidden="true"><use href="assets/icons.svg#icon-upload"></use></svg>
+                Open a PDF from your device
+              </button>
+              <button class="reader-icon-btn" type="button" data-action="fullscreen" aria-label="Enter fullscreen" title="Fullscreen">
+                <svg aria-hidden="true"><use href="assets/icons.svg#icon-fullscreen"></use></svg>
+              </button>
+            </div>
+            <button class="text-link reader-settings-link" type="button" data-action="show-shortcuts">
+              <svg aria-hidden="true"><use href="assets/icons.svg#icon-keyboard"></use></svg>
+              Keyboard shortcuts
+            </button>
+          </div>
+
+          <div class="reader-settings-group reader-settings-group--muted">
+            <h3>About PDF text</h3>
+            <p>PDF text size and line spacing are fixed by the document. Use zoom and reading width to change the view — AVADRA does not pretend to reflow a PDF.</p>
+            <p><a href="notices.html">Third-party notices</a> · <a href="index.html#about">About the shelves</a></p>
+          </div>
+
+          <div class="reader-settings-group">
+            <button class="text-link reader-danger" type="button" data-action="clear-progress">
+              <svg aria-hidden="true"><use href="assets/icons.svg#icon-trash"></use></svg>
+              Clear progress and bookmarks for this book
+            </button>
+          </div>
+        </section>
+      </div>
+    </aside>
+
+    <div class="reader-toast" id="reader-toast" role="status" aria-live="polite"></div>
+
+    <dialog class="reader-dialog" id="shortcuts-dialog" aria-labelledby="shortcuts-title">
+      <div class="reader-dialog__head">
+        <h2 id="shortcuts-title">Keyboard shortcuts</h2>
+        <button class="dialog-close" type="button" data-action="close-shortcuts" aria-label="Close shortcuts">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-x"></use></svg>
+        </button>
+      </div>
+      <dl class="shortcut-list">
+        <div><dt><kbd>→</kbd> <kbd>PgDn</kbd> <kbd>Space</kbd></dt><dd>Next page</dd></div>
+        <div><dt><kbd>←</kbd> <kbd>PgUp</kbd> <kbd>Shift</kbd>+<kbd>Space</kbd></dt><dd>Previous page</dd></div>
+        <div><dt><kbd>Home</kbd> / <kbd>End</kbd></dt><dd>First / last page</dd></div>
+        <div><dt><kbd>+</kbd> / <kbd>−</kbd> / <kbd>0</kbd></dt><dd>Zoom in / out / fit width</dd></div>
+        <div><dt><kbd>Ctrl</kbd>+<kbd>F</kbd> or <kbd>/</kbd></dt><dd>Search inside the book</dd></div>
+        <div><dt><kbd>T</kbd> / <kbd>B</kbd> / <kbd>S</kbd></dt><dd>Pages / bookmark / settings</dd></div>
+        <div><dt><kbd>V</kbd> / <kbd>R</kbd></dt><dd>Book view / reading direction</dd></div>
+        <div><dt><kbd>F</kbd> / <kbd>C</kbd> / <kbd>D</kbd></dt><dd>Fullscreen / hide controls / focus mode</dd></div>
+        <div><dt><kbd>M</kbd> / <kbd>?</kbd></dt><dd>Cycle theme / this list</dd></div>
+        <div><dt><kbd>Esc</kbd></dt><dd>Close a panel or leave focus mode</dd></div>
+      </dl>
+      <p class="reader-dialog__note">Shortcuts are ignored while you are typing in a field.</p>
+    </dialog>
+
+    <dialog class="reader-dialog reader-confirm" id="confirm-dialog" aria-labelledby="confirm-title">
+      <div class="reader-dialog__head">
+        <h2 id="confirm-title">Are you sure?</h2>
+        <button class="dialog-close" type="button" data-confirm="cancel" aria-label="Cancel">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-x"></use></svg>
+        </button>
+      </div>
+      <p id="confirm-message"></p>
+      <div class="reader-dialog__actions">
+        <button class="btn btn--ghost" type="button" data-confirm="cancel">Cancel</button>
+        <button class="btn btn--gold" type="button" data-confirm="ok" id="confirm-ok">Continue</button>
+      </div>
+    </dialog>
+
+    <input type="file" id="reader-file-input" accept="application/pdf,.pdf" hidden>
+  </div>
 </body>
 </html>

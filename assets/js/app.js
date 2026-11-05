@@ -1,13 +1,17 @@
 /**
  * Homepage behaviour: catalogue rendering, search and filter, book details,
- * resume links, and the small mobile navigation.
+ * the continue-reading shelf, resume links, and the small mobile navigation.
  */
 
 import {
   loadCatalogue,
   escapeHtml,
   getCategoryStyle,
+  getBookById,
+  getBookHref,
   getFeaturedBook,
+  getOpenBooks,
+  isPersonalBook,
   searchBooks,
   sortBooks,
   formatDate,
@@ -35,9 +39,9 @@ const state = {
 
 const dom = {
   body: document.body,
+  header: document.querySelector(".site-header"),
   menuToggle: document.querySelector(".menu-toggle"),
   nav: document.querySelector("#site-nav"),
-  nightShelf: document.querySelector("[data-night-shelf]"),
   feature: document.querySelector("#feature-panel"),
   recent: document.querySelector("#recent-list"),
   total: document.querySelector("[data-catalogue-total]"),
@@ -52,6 +56,13 @@ const dom = {
   footerReader: document.querySelector("[data-footer-reader]"),
   navResume: document.querySelector("[data-nav-resume]"),
   heroResume: document.querySelector("[data-hero-resume]"),
+  heroResumeNote: document.querySelector("[data-hero-resume-note]"),
+  continueSection: document.querySelector("#continue"),
+  continueCover: document.querySelector("[data-continue-cover]"),
+  continueTitle: document.querySelector("[data-continue-title]"),
+  continueAuthor: document.querySelector("[data-continue-author]"),
+  continueMeter: document.querySelector("[data-continue-meter]"),
+  continueLink: document.querySelector("[data-continue-link]"),
   dialog: document.querySelector("#book-dialog"),
   dialogVisual: document.querySelector("#book-dialog-visual"),
   dialogBody: document.querySelector("#book-dialog-body"),
@@ -63,11 +74,16 @@ function icon(name, className = "") {
 }
 
 function readHref(book) {
-  return `flipbook.html?book=${encodeURIComponent(book.id)}`;
+  return getBookHref(book);
 }
 
 function truncated(value, length = 64) {
   return value.length > length ? `${value.slice(0, length - 1).trimEnd()}…` : value;
+}
+
+function coverLines(book) {
+  if (Array.isArray(book.coverTitle) && book.coverTitle.length) return book.coverTitle;
+  return [book.title];
 }
 
 /* --------------------------------------------------------------------------
@@ -75,7 +91,7 @@ function truncated(value, length = 64) {
    -------------------------------------------------------------------------- */
 
 function coverMarkup(book, { eager = false } = {}) {
-  const lines = book.coverTitle.length ? book.coverTitle : [book.title];
+  const lines = coverLines(book);
   const missingClass = book.cover ? "" : " book-cover--missing";
   return `
     <span class="book-cover${missingClass}" data-lines="${lines.length}">
@@ -103,7 +119,12 @@ function coverMarkup(book, { eager = false } = {}) {
 }
 
 function volumeLabel(book) {
-  return book.seriesNumber ? `Volume ${book.seriesNumber}` : book.category;
+  if (book.seriesNumber) return `Volume ${book.seriesNumber}`;
+  return book.category;
+}
+
+function accessLabel(book) {
+  return book.access === "personal" ? "Personal copy" : "Open access";
 }
 
 function lengthLabel(book) {
@@ -128,8 +149,9 @@ function progressMarkup(book) {
 function bookCardMarkup(book) {
   const progress = getProgress(book.id);
   const meta = [book.year, book.pages ? formatPageCount(book.pages) : ""].filter(Boolean).join(" · ");
+  const personal = isPersonalBook(book);
   return `
-    <li class="book-card" style="${getCategoryStyle(book.category)}">
+    <li class="book-card${personal ? " book-card--personal" : ""}" data-access="${book.access}" style="${getCategoryStyle(book.category)}">
       <button
         class="book-card__cover-button"
         type="button"
@@ -148,6 +170,7 @@ function bookCardMarkup(book) {
         <p class="book-card__summary">${escapeHtml(book.summary)}</p>
         ${progressMarkup(book)}
         <div class="book-card__foot">
+          <span class="book-card__access">${accessLabel(book)}</span>
           <span>${lengthLabel(book)}</span>
           <a
             class="book-card__read"
@@ -164,7 +187,7 @@ function featureMarkup(book) {
   const quote =
     book.featuredQuote ||
     (book.curatorNote ? { text: book.curatorNote, attribution: "A note from the curator" } : null);
-  const meta = [volumeLabel(book), book.series, book.year].filter(Boolean).join(" · ");
+  const meta = [volumeLabel(book), book.year].filter(Boolean).join(" · ");
   const action = progress ? `Continue at page ${progress.page}` : "Start reading";
   const contents = book.editionContents
     ? `${book.editionContents} · ${lengthLabel(book)}`
@@ -217,7 +240,7 @@ function recentItemMarkup(book) {
         <p class="recent-item__meta">
           <span class="recent-item__category">${escapeHtml(volumeLabel(book))}</span>
           ${book.year ? `<span>${book.year}</span>` : ""}
-          <span>${escapeHtml(book.editionContents || "Full novel")}</span>
+          <span>${escapeHtml(book.editionContents || "Full edition")}</span>
         </p>
         <h3><a href="${readHref(book)}">${escapeHtml(book.title)}</a></h3>
         <p class="recent-item__author">${escapeHtml(book.author)}</p>
@@ -230,12 +253,12 @@ function recentItemMarkup(book) {
 }
 
 const SORT_LABELS = {
-  series: "reading order",
-  curated: "reading order",
+  series: "shelf order",
+  curated: "shelf order",
   title: "title, A–Z",
   author: "author, A–Z",
   newest: "recently added",
-  oldest: "oldest first",
+  oldest: "publication year",
   shortest: "shortest read",
 };
 
@@ -258,7 +281,7 @@ function emptyStateMarkup() {
   return `
     <div class="collection-state">
       ${icon("book-open", "collection-state__seal")}
-      <h3>No volumes answer that description.</h3>
+      <h3>No editions answer that description.</h3>
       <p>Try a different title, author, or mood — or clear the search and filters to see the whole shelf.</p>
       <button class="btn btn--ghost" type="button" data-clear-filters>Clear search and filters</button>
     </div>`;
@@ -268,46 +291,11 @@ function emptyStateMarkup() {
    Rendering
    -------------------------------------------------------------------------- */
 
-function renderNightShelf() {
-  const catalogue = state.catalogue;
-  if (!catalogue) return;
-  const chosenIds = catalogue.nightShelf.length
-    ? catalogue.nightShelf
-    : catalogue.books.slice(0, 3).map((book) => book.id);
-
-  const books = chosenIds
-    .map((id) => catalogue.books.find((book) => book.id === id))
-    .filter(Boolean)
-    .slice(0, 3);
-
-  dom.nightShelf.innerHTML = books
-    .map(
-      (book) => `
-      <button
-        class="night-shelf__book"
-        type="button"
-        data-book-id="${escapeHtml(book.id)}"
-        aria-label="Open details for ${escapeHtml(book.title)} by ${escapeHtml(book.author)}"
-      >${coverMarkup(book, { eager: true })}</button>`,
-    )
-    .join("");
-
-  restoreNightCaption();
-}
-
-function restoreNightCaption() {
-  const caption = document.querySelector(".night-shelf__caption");
-  if (!caption) return;
-  caption.innerHTML = `
-    <strong>From the night shelf</strong>
-    <span>Volumes I, IV &amp; VII</span>`;
-}
-
 function renderFeature() {
   if (!state.catalogue) return;
   const book = getFeaturedBook(state.catalogue);
   if (!book) {
-    dom.feature.innerHTML = `<p class="feature-panel__placeholder">The night desk is empty.</p>`;
+    dom.feature.innerHTML = `<p class="feature-panel__placeholder">The desk is empty.</p>`;
     return;
   }
   dom.feature.innerHTML = featureMarkup(book);
@@ -315,7 +303,7 @@ function renderFeature() {
 
 function renderRecent() {
   if (!state.catalogue) return;
-  const books = state.catalogue.books.slice(0, 3);
+  const books = getOpenBooks(state.catalogue).slice(0, 3);
   dom.recent.innerHTML = books.map(recentItemMarkup).join("");
 }
 
@@ -336,25 +324,25 @@ function renderCollection() {
   const results = sortBooks(searchBooks(base, query), state.sort);
 
   if (!query && state.category === "All") {
-    dom.total.textContent = `${allBooks.length} volumes on the shelf`;
+    dom.total.textContent = `${allBooks.length} editions on the shelf`;
   } else {
-    dom.total.textContent = `${results.length} of ${allBooks.length} volumes shown`;
+    dom.total.textContent = `${results.length} of ${allBooks.length} editions shown`;
   }
 
   const sortLabel = SORT_LABELS[state.sort] || SORT_LABELS.curated;
   if (!results.length) {
     dom.status.innerHTML = `
-      <span>No volumes match this request.</span>
+      <span>No editions match this request.</span>
       <span class="catalogue-status__hint">Try fewer words or another category.</span>`;
   } else if (query || state.category !== "All") {
     const categoryClause = state.category !== "All" ? ` in ${escapeHtml(state.category)}` : "";
     const queryClause = query ? ` for “${escapeHtml(query)}”` : "";
     dom.status.innerHTML = `
-      <span>Showing <strong>${results.length}</strong> of ${allBooks.length} volumes${categoryClause}${queryClause}.</span>
+      <span>Showing <strong>${results.length}</strong> of ${allBooks.length} editions${categoryClause}${queryClause}.</span>
       <span class="catalogue-status__hint">Sorted by ${escapeHtml(sortLabel)}.</span>`;
   } else {
     dom.status.innerHTML = `
-      <span>All <strong>${allBooks.length}</strong> volumes are on the shelf.</span>
+      <span>All <strong>${allBooks.length}</strong> editions are on the shelf.</span>
       <span class="catalogue-status__hint">Sorted by ${escapeHtml(sortLabel)}.</span>`;
   }
 
@@ -373,25 +361,23 @@ function renderLoadingState() {
   dom.total.textContent = "Opening the shelves…";
   dom.status.innerHTML = `<span>Opening the catalogue…</span><span class="catalogue-status__hint">One moment.</span>`;
   dom.feature.innerHTML = `<p class="feature-panel__placeholder">Lighting the desk…</p>`;
-  dom.recent.innerHTML = `<p class="recent-list__loading">Opening the first volumes…</p>`;
-  dom.nightShelf.innerHTML = "";
-  restoreNightCaption();
+  dom.recent.innerHTML = `<p class="recent-list__loading">Opening the first editions…</p>`;
   dom.region.setAttribute("aria-busy", "true");
   dom.region.innerHTML = skeletonMarkup();
 }
 
 function renderAll() {
   if (!state.catalogue) return;
-  renderNightShelf();
   renderFeature();
   renderRecent();
   renderFilters();
   renderCollection();
   refreshResumeLinks();
+  renderContinueSection();
 }
 
 function showCatalogueError(error) {
-  console.error("The Wizarding Library catalogue error:", error);
+  console.error("AVADRA catalogue error:", error);
 
   const isFile = error?.code === "file-protocol";
   const isHttp = error?.code === "http-error";
@@ -412,60 +398,123 @@ function showCatalogueError(error) {
 
   dom.status.innerHTML = `
     <span>The shelves are unavailable.</span>
-    <span class="catalogue-status__hint">The rest of the page is still readable.</span>`;
+    <span class="catalogue-status__hint">The open shelf is still reachable from the reader.</span>`;
   dom.total.textContent = "Catalogue unavailable";
   dom.feature.innerHTML = `
     <p class="feature-panel__placeholder">
-      The night desk is dark until the catalogue opens. The collection below has the details.
+      The desk is dark until the catalogue opens. You can still open a PDF in the reader.
     </p>`;
   dom.recent.innerHTML = `
-    <p class="recent-list__loading">The first volumes could not be listed. See the catalogue notes below.</p>`;
-  dom.nightShelf.innerHTML = "";
+    <p class="recent-list__loading">The first editions could not be listed. See the catalogue notes below.</p>`;
 
-  const caption = document.querySelector(".night-shelf__caption");
-  if (caption) {
-    caption.innerHTML = `<strong>The night shelf is dark</strong><span>The catalogue could not be opened</span>`;
-  }
+  renderContinueSection();
 }
 
 /* --------------------------------------------------------------------------
-   Personalisation
+   Continue reading
    -------------------------------------------------------------------------- */
 
-function refreshResumeLinks() {
-  if (!state.catalogue) return;
+function getResumeTarget() {
   const lastRead = getLastRead();
-  const book = lastRead ? state.catalogue.books.find((item) => item.id === lastRead.bookId) : null;
-  const progress = lastRead?.progress;
+  if (!lastRead?.progress) return null;
 
-  if (!book || !progress) {
-    dom.navResume.hidden = true;
-    dom.heroResume.hidden = true;
-    const firstBook = state.catalogue.books[0];
+  const book = state.catalogue ? getBookById(state.catalogue, lastRead.bookId) : null;
+  if (book) {
+    return { book, progress: lastRead.progress, href: readHref(book), meta: lastRead.meta };
+  }
+
+  if (lastRead.meta?.access === "local") {
+    return {
+      book: {
+        id: lastRead.meta.id,
+        title: lastRead.meta.title,
+        author: lastRead.meta.author,
+        category: "Local document",
+        access: "local",
+        cover: "",
+        coverTitle: [lastRead.meta.title],
+      },
+      progress: lastRead.progress,
+      href: `flipbook.html?local=${encodeURIComponent(lastRead.meta.id)}`,
+      meta: lastRead.meta,
+    };
+  }
+
+  return null;
+}
+
+function renderContinueSection() {
+  if (!dom.continueSection) return;
+  const target = getResumeTarget();
+  if (!target) {
+    dom.continueSection.hidden = true;
+    return;
+  }
+
+  const { book, progress, href } = target;
+  const percent = Math.max(1, Math.min(100, Math.round((progress.page / progress.totalPages) * 100)));
+  dom.continueCover.innerHTML = coverMarkup(book, { eager: true });
+  dom.continueTitle.textContent = book.title;
+  dom.continueAuthor.textContent = book.author;
+  dom.continueMeter.innerHTML = `
+    <div class="continue-card__track" aria-hidden="true">
+      <span class="continue-card__fill" style="width:${percent}%"></span>
+    </div>
+    <p class="continue-card__label">
+      Page ${progress.page} of ${progress.totalPages} · ${percent}% read
+      <span>Saved in this browser</span>
+    </p>`;
+  dom.continueLink.href = href;
+  dom.continueLink.innerHTML = `Continue reading ${icon("arrow-right")}`;
+  dom.continueLink.setAttribute("aria-label", `Continue ${book.title} at page ${progress.page}`);
+  dom.continueSection.hidden = false;
+}
+
+function refreshResumeLinks() {
+  const target = getResumeTarget();
+  const firstBook = state.catalogue ? getOpenBooks(state.catalogue)[0] : null;
+
+  if (!target) {
+    if (dom.navResume) dom.navResume.hidden = true;
+    if (dom.heroResume) {
+      dom.heroResume.href = "#collection";
+      dom.heroResume.removeAttribute("aria-label");
+      dom.heroResume.dataset.state = "empty";
+    }
+    if (dom.heroResumeNote) {
+      dom.heroResumeNote.textContent = "Choose a volume to begin";
+    }
     if (dom.footerReader) {
-      dom.footerReader.href = firstBook ? readHref(firstBook) : "index.html#collection";
+      dom.footerReader.href = firstBook ? readHref(firstBook) : "flipbook.html";
     }
     return;
   }
 
-  const href = readHref(book);
-  const navLabel = dom.navResume.querySelector("[data-nav-resume-label]");
-  const heroLabel = dom.heroResume.querySelector("[data-hero-resume-label]");
-  dom.navResume.href = href;
-  dom.heroResume.href = href;
-  dom.navResume.hidden = false;
-  dom.heroResume.hidden = false;
-  if (navLabel) navLabel.textContent = "Resume reading";
-  if (heroLabel) {
-    heroLabel.textContent = `Continue “${truncated(book.title, 44)}” · page ${progress.page}`;
+  const { book, progress, href } = target;
+  if (dom.navResume) {
+    const navLabel = dom.navResume.querySelector("[data-nav-resume-label]");
+    dom.navResume.href = href;
+    dom.navResume.hidden = false;
+    if (navLabel) navLabel.textContent = "Resume reading";
+    dom.navResume.setAttribute("aria-label", `Resume ${book.title} at page ${progress.page}`);
   }
-  dom.navResume.setAttribute("aria-label", `Resume ${book.title} at page ${progress.page}`);
-  dom.heroResume.setAttribute("aria-label", `Resume ${book.title} at page ${progress.page}`);
+  if (dom.heroResume) {
+    dom.heroResume.href = href;
+    dom.heroResume.dataset.state = "resume";
+    dom.heroResume.setAttribute(
+      "aria-label",
+      `Continue ${book.title} at page ${progress.page} of ${progress.totalPages}`,
+    );
+  }
+  if (dom.heroResumeNote) {
+    dom.heroResumeNote.textContent = `“${truncated(book.title, 42)}” · page ${progress.page}`;
+  }
   if (dom.footerReader) dom.footerReader.href = href;
 }
 
 function refreshPersonalisation() {
   refreshResumeLinks();
+  renderContinueSection();
   if (state.catalogue) {
     renderFeature();
     renderCollection();
@@ -561,17 +610,27 @@ function setupCollectionControls() {
 
 function openBookDialog(bookId) {
   if (!state.catalogue || !dom.dialog) return;
-  const book = state.catalogue.books.find((item) => item.id === bookId);
+  const book = getBookById(state.catalogue, bookId);
   if (!book) return;
 
   const progress = getProgress(book.id);
-  const action = progress ? `Continue at page ${progress.page}` : "Begin reading";
+  const action = progress ? `Continue at page ${progress.page}` : "Open the reader";
   const source = book.source;
   const sourceMarkup = source.url
     ? `<a href="${escapeHtml(source.url)}" target="_blank" rel="noopener">${escapeHtml(
         source.name,
       )}${source.ebook ? ` · eBook ${escapeHtml(source.ebook)}` : ""} ${icon("external")}</a>`
     : `${escapeHtml(source.name)}${source.ebook ? ` · eBook ${escapeHtml(source.ebook)}` : ""}`;
+  const personal = isPersonalBook(book);
+  const editionNote = personal
+    ? `<div class="book-dialog__notice">
+        <strong>Private edition</strong>
+        <p>This record does not include a book file. The reader will ask you to choose a PDF from your device. The file stays in this browser and is never uploaded.</p>
+      </div>`
+    : `<div class="book-dialog__notice book-dialog__notice--open">
+        <strong>Ready to read</strong>
+        <p>This edition is served with this site and opens directly in the reader. Your place is remembered in this browser.</p>
+      </div>`;
 
   dom.dialogVisual.innerHTML = coverMarkup(book, { eager: true });
   dom.dialogBody.setAttribute("style", getCategoryStyle(book.category));
@@ -592,11 +651,12 @@ function openBookDialog(bookId) {
           </blockquote>`
         : ""
     }
+    ${editionNote}
     <dl class="book-dialog__facts">
       ${
         book.series
           ? `<div>
-        <dt>Series</dt>
+        <dt>Shelf</dt>
         <dd>${escapeHtml(book.series)}${
           book.seriesNumber ? ` · Volume ${book.seriesNumber}` : ""
         }</dd>
@@ -605,7 +665,7 @@ function openBookDialog(bookId) {
       }
       <div>
         <dt>Contents</dt>
-        <dd>${escapeHtml(book.editionContents || "The full novel")}</dd>
+        <dd>${escapeHtml(book.editionContents || "The complete edition")}</dd>
       </div>
       <div>
         <dt>Reading time</dt>
@@ -640,9 +700,15 @@ function openBookDialog(bookId) {
       <button class="text-link" type="button" data-close-dialog>Back to the shelf</button>
     </div>
     <p class="book-dialog__footnote">
-      A personal copy supplied for this library. The book file is not part of the
-      public site and is not for redistribution. This is an unofficial fan project;
-      Harry Potter and related names belong to their respective rights holders.
+      ${
+        personal
+          ? "A catalogue record for a personal copy. No book file is distributed with this site. This is an unofficial, independent project; the underlying work belongs to its rights holders."
+          : `An edition served with AVADRA. This is an unofficial, independent project; the underlying work belongs to its rights holders.${
+              source.url
+                ? ` <a href="${escapeHtml(source.url)}" target="_blank" rel="noopener">View the source text</a>.`
+                : ""
+            }`
+      }
     </p>`;
 
   dom.dialog.scrollTop = 0;
@@ -713,6 +779,25 @@ function setMenu(open) {
   if (label) label.textContent = open ? "Close menu" : "Open menu";
 }
 
+function setupHeaderScroll() {
+  if (!dom.header) return;
+  let ticking = false;
+  const update = () => {
+    dom.header.classList.toggle("is-scrolled", window.scrollY > 24);
+    ticking = false;
+  };
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(update);
+    },
+    { passive: true },
+  );
+  update();
+}
+
 function setupNavigation() {
   dom.menuToggle.addEventListener("click", () => {
     setMenu(dom.menuToggle.getAttribute("aria-expanded") !== "true");
@@ -743,6 +828,8 @@ function setupNavigation() {
   desktopQuery.addEventListener("change", (event) => {
     if (event.matches) setMenu(false);
   });
+
+  setupHeaderScroll();
 }
 
 /* --------------------------------------------------------------------------

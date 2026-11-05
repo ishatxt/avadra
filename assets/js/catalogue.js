@@ -9,10 +9,15 @@
 const CATALOGUE_URL = new URL("../../data/catalogue.json", import.meta.url);
 
 const CATEGORY_META = Object.freeze({
-  "Harry Potter": {
-    color: "var(--cat-harry-potter)",
-    ink: "var(--cat-harry-potter-ink)",
-    blurb: "Seven volumes, one long story, read in order.",
+  "Open Shelf": {
+    color: "var(--cat-open-shelf)",
+    ink: "var(--cat-open-shelf-ink)",
+    blurb: "Seven editions, ready to read here.",
+  },
+  "Private Editions": {
+    color: "var(--cat-private-editions)",
+    ink: "var(--cat-private-editions-ink)",
+    blurb: "Catalogue records for personal copies. Bring your own PDF.",
   },
 });
 
@@ -130,8 +135,9 @@ function normaliseBook(raw) {
   const cover = safeLocalAsset(raw.cover);
   const file = safeLocalAsset(raw.file);
   const pages = parsePositiveInteger(raw.pages);
+  const access = raw.access === "personal" ? "personal" : "open";
 
-  if (!id || !title || !author || !category || !file) {
+  if (!id || !title || !author || !category || (access === "open" && !file)) {
     return null;
   }
 
@@ -144,6 +150,7 @@ function normaliseBook(raw) {
     seriesNumber: parsePositiveInteger(raw.seriesNumber),
     year: parseYear(raw.year),
     category,
+    access,
     summary,
     description,
     curatorNote: cleanText(raw.curatorNote, 400),
@@ -276,6 +283,7 @@ export function searchBooks(books, query) {
         book.title,
         book.author,
         book.category,
+        book.access,
         book.series,
         book.seriesNumber,
         book.year,
@@ -283,6 +291,7 @@ export function searchBooks(books, query) {
         book.description,
         book.curatorNote,
         book.editionContents,
+        book.source.name,
       ].join(" "),
     );
     return terms.every((term) => haystack.includes(term));
@@ -292,6 +301,7 @@ export function searchBooks(books, query) {
 export function sortBooks(books, sort) {
   const list = books.slice();
   const byTitle = (a, b) => a.title.localeCompare(b.title, "en", { sensitivity: "base" });
+  const shelfRank = (book) => (book.category === "Open Shelf" ? 0 : 1);
 
   switch (sort) {
     case "title":
@@ -303,7 +313,10 @@ export function sortBooks(books, sort) {
       );
     case "series":
       return list.sort(
-        (a, b) => (a.seriesNumber || 9999) - (b.seriesNumber || 9999) || byTitle(a, b),
+        (a, b) =>
+          shelfRank(a) - shelfRank(b) ||
+          (a.seriesNumber || 9999) - (b.seriesNumber || 9999) ||
+          byTitle(a, b),
       );
     case "newest":
       return list.sort((a, b) => Date.parse(b.addedAt || 0) - Date.parse(a.addedAt || 0));
@@ -346,4 +359,27 @@ export function formatDate(value) {
 export function formatPageCount(pages) {
   if (!pages) return "Page count unlisted";
   return `${pages} ${pages === 1 ? "page" : "pages"}`;
+}
+
+export function getBookById(catalogue, id) {
+  if (!catalogue || !id) return null;
+  return catalogue.books.find((book) => book.id === id) || null;
+}
+
+export function getOpenBooks(catalogue) {
+  if (!catalogue) return [];
+  return catalogue.books.filter((book) => book.access === "open");
+}
+
+export function isOpenBook(book) {
+  return Boolean(book && book.access === "open");
+}
+
+export function isPersonalBook(book) {
+  return Boolean(book && book.access === "personal");
+}
+
+export function getBookHref(book) {
+  if (!book) return "flipbook.html";
+  return `flipbook.html?book=${encodeURIComponent(book.id)}`;
 }
