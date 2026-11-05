@@ -464,6 +464,64 @@ body[data-reader-state="ready"] #pdf-canvas {
 }
 
 /* 2D mode: a soft crossfade instead of a 3D turn. */
+
+/* Page peel: an interactive corner drag that turns the page like a book. */
+.reader-peel {
+  position: absolute;
+  z-index: 8;
+  transform-style: preserve-3d;
+  will-change: transform;
+  pointer-events: none;
+}
+
+.reader-peel[hidden] {
+  display: none;
+}
+
+.reader-peel__face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #ffffff;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.75);
+}
+
+.reader-peel__face--back {
+  transform: rotateY(180deg);
+}
+
+.reader-peel__face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.14),
+    rgba(0, 0, 0, 0) 20%,
+    rgba(0, 0, 0, 0) 78%,
+    rgba(255, 255, 255, 0.05)
+  );
+  pointer-events: none;
+}
+
+.reader-peel__face--back::after {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05),
+    rgba(0, 0, 0, 0) 22%,
+    rgba(0, 0, 0, 0) 80%,
+    rgba(0, 0, 0, 0.14)
+  );
+}
+
+.reader-peel canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .reader-page-wrap.is-fading #pdf-canvas {
   opacity: 0;
 }

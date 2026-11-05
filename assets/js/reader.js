@@ -100,6 +100,9 @@ const dom = {
   leaf: $("#reader-leaf"),
   leafFront: $("#pdf-leaf-front"),
   leafBack: $("#pdf-leaf-back"),
+  peel: $("#reader-peel"),
+  peelFront: $("#pdf-peel-front"),
+  peelBack: $("#pdf-peel-back"),
   renderLoading: $("#reader-render-loading"),
   loading: $("#reader-loading"),
   loadingTitle: $("#reader-loading-title"),
@@ -171,6 +174,7 @@ const state = {
   pageSize: null,
   spreadStart: 0,
   spreadPages: [],
+  peel: null,
 
   drawerOpen: false,
   activePanel: "pages",
@@ -986,6 +990,53 @@ function bindEvents() {
     );
   }
 
+  /* Interactive corner drag to turn the page (DearFlip-style peel). */
+  if (dom.canvas) {
+    dom.canvas.addEventListener(
+      "mousedown",
+      (event) => {
+        void startPeel(event.clientX, event.clientY);
+      },
+      { passive: false },
+    );
+    dom.canvas.addEventListener(
+      "touchstart",
+      (event) => {
+        if (event.touches.length !== 1) return;
+        const touch = event.touches[0];
+        void startPeel(touch.clientX, touch.clientY);
+      },
+      { passive: false },
+    );
+  }
+
+  window.addEventListener("mousemove", (event) => {
+    if (state.peel?.active) {
+      event.preventDefault();
+      updatePeel(event.clientX, event.clientY);
+    }
+  });
+  window.addEventListener("mouseup", (event) => {
+    if (state.peel?.active) {
+      event.preventDefault();
+      void endPeel();
+    }
+  });
+  window.addEventListener("mouseleave", () => {
+    if (state.peel?.active) void endPeel();
+  });
+  window.addEventListener("touchmove", (event) => {
+    if (state.peel?.active) {
+      event.preventDefault();
+      const touch = event.touches[0];
+      updatePeel(touch.clientX, touch.clientY);
+    }
+  },
+  { passive: false });
+  window.addEventListener("touchend", () => {
+    if (state.peel?.active) void endPeel();
+  });
+
   document.addEventListener("fullscreenchange", () => {
     updateFullscreenUI();
     scheduleRender(true);
@@ -1591,7 +1642,7 @@ function updateActiveThumb() {
 }
 
 async function goToPage(pageNumber, { animate = true, force = false } = {}) {
-  if (!state.pdf) return;
+  if (!state.pdf || state.peel?.active) return;
   const target = clamp(
     Math.round(Number(pageNumber) || 1),
     1,
@@ -2081,6 +2132,224 @@ function finishBookRender({ start, pages, target, token, initial, loadingTimer }
   return true;
 }
 
+/* --------------------------------------------------------------------------
+   Page peel: interactive corner drag to turn the page (DearFlip-style)
+   -------------------------------------------------------------------------- */
+
+function peelTargetPage(direction) {
+  const pages = state.spreadPages;
+  if (!pages || !pages.length) return null;
+  const isLtr = state.direction === "ltr";
+  const rightPage =
+    pages.length >= 2 ? pages[1] : pages[0];
+  const leftPage = isLtr ? pages[0] : pages.length >= 2 ? pages[1] : pages[0];
+
+  if (direction === "next") {
+    return isLtr
+      ? { page: rightPage, side: "right", corner: "bottom-right", target: nextPageTarget() }
+      : { page: leftPage, side: "left", corner: "bottom-left", target: nextPageTarget() };
+  }
+  return isLtr
+    ? { page: leftPage, side: "left", corner: "bottom-left", target: prevPageTarget() }
+    : { page: rightPage, side: "right", corner: "bottom-right", target: prevPageTarget() };
+}
+
+function pageCssRect(side) {
+  const rect = dom.canvas.getBoundingClientRect();
+  const wrap = dom.pageWrap.getBoundingClientRect();
+  const x = rect.left - wrap.left;
+  const y = rect.top - wrap.top;
+  const w = rect.width / 2;
+  const h = rect.height;
+  if (side === "right") return { x: x + w, y, w, h };
+  return { x, y, w, h };
+}
+
+async function snapshotPage(pageNumber, canvas, cssW, cssH) {
+  if (!state.pdf) return false;
+  const pdfPage = await state.pdf.getPage(pageNumber);
+  const base = pdfPage.getViewport({ scale: 1 });
+  const scale = Math.min(cssW / base.width, cssH / base.height);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const viewport = pdfPage.getViewport({ scale: scale * dpr });
+  canvas.width = Math.max(1, Math.floor(viewport.width));
+  canvas.height = Math.max(1, Math.floor(viewport.height));
+  const ctx = canvas.getContext("2d", { alpha: false });
+  if (!ctx) return false;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  await pdfPage.render({ canvasContext: ctx, viewport, background: "#ffffff" }).promise;
+  canvas.style.width = `${cssW}px`;
+  canvas.style.height = `${cssH}px`;
+  return true;
+}
+
+function showPeel(side, corner) {
+  if (!dom.peel) return;
+  const r = pageCssRect(side);
+  dom.peel.style.left = `${r.x}px`;
+  dom.peel.style.top = `${r.y}px`;
+  dom.peel.style.width = `${r.w}px`;
+  dom.peel.style.height = `${r.h}px`;
+  dom.peel.style.transformOrigin =
+    corner === "bottom-right" ? "right bottom" : "left bottom";
+  dom.peel.hidden = false;
+  dom.peel.style.transition = "none";
+  dom.peel.style.transform = "";
+}
+
+function hidePeel() {
+  if (!dom.peel) return;
+  dom.peel.hidden = true;
+  dom.peel.style.transition = "none";
+  dom.peel.style.transform = "";
+}
+
+function updatePeel(clientX, clientY) {
+  const p = state.peel;
+  if (!p || !p.active || !dom.peel || dom.peel.hidden) return;
+  const wrap = dom.pageWrap.getBoundingClientRect();
+  const x = clientX - wrap.left;
+  const y = clientY - wrap.top;
+  const dx = x - p.cornerX;
+  const dy = y - p.cornerY;
+  const pull = p.corner === "bottom-right" ? -dx : dx;
+  const angleY = Math.min(150, Math.max(0, pull / Math.max(1, p.pageW) * 150));
+  const signed = p.corner === "bottom-right" ? angleY : -angleY;
+  dom.peel.style.transform = `translate(${dx}px, ${dy}px) rotateY(${signed}deg)`;
+}
+
+async function startPeel(clientX, clientY) {
+  if (
+    state.peel?.active ||
+    !state.pdf ||
+    effectiveLayout() !== "book" ||
+    state.effect !== "3d"
+  ) {
+    return;
+  }
+  const rect = dom.canvas.getBoundingClientRect();
+  const cx = clientX - rect.left;
+  const cy = clientY - rect.top;
+  const isRight = cx > rect.width / 2;
+  const nearBottom = cy > rect.height * 0.66;
+  const nearRight = cx > rect.width * 0.66;
+  const nearLeft = cx < rect.width * 0.34;
+
+  let direction, side, corner;
+  if (state.direction === "ltr") {
+    if (isRight && nearBottom && nearRight) {
+      direction = "next";
+      side = "right";
+      corner = "bottom-right";
+    } else if (!isRight && nearBottom && nearLeft) {
+      direction = "prev";
+      side = "left";
+      corner = "bottom-left";
+    } else {
+      return;
+    }
+  } else {
+    if (!isRight && nearBottom && nearLeft) {
+      direction = "next";
+      side = "left";
+      corner = "bottom-left";
+    } else if (isRight && nearBottom && nearRight) {
+      direction = "prev";
+      side = "right";
+      corner = "bottom-right";
+    } else {
+      return;
+    }
+  }
+
+  const target = peelTargetPage(direction);
+  if (!target || target.page === null) return;
+  const newSpread = getSpreadPages(target.target);
+  if (!newSpread.length) return;
+  const layout = computeBookLayout();
+  if (!layout) return;
+
+  const r = pageCssRect(side);
+  try {
+    await paintBookCanvas(dom.canvas, state.pdf, newSpread, layout, {
+      token: state.renderToken,
+    });
+    await snapshotPage(target.page, dom.peelFront, r.w, r.h);
+  } catch (error) {
+    state.peel = null;
+    hidePeel();
+    return;
+  }
+  state.peel = {
+    active: true,
+    side,
+    corner,
+    page: target.page,
+    target: target.target,
+    cornerX: cx,
+    cornerY: cy,
+    pageW: rect.width / 2,
+    pageH: rect.height,
+    peelRect: r,
+    layout,
+  };
+  if (state.peel && state.peel.active) {
+    dom.peelBack.style.background = "#ffffff";
+    showPeel(side, corner);
+  }
+}
+
+async function endPeel() {
+  const p = state.peel;
+  if (!p || !p.active) return;
+  state.peel = null;
+  if (!dom.peel) return;
+  const match = dom.peel.style.transform.match(/rotateY\(([-.\d]+)deg\)/);
+  const angle = Math.abs(Number(match ? match[1] : 0)) || 0;
+
+  if (angle > 80) {
+    state.currentPage = p.target;
+    finishBookRender({
+      start: p.target,
+      pages: getSpreadPages(p.target),
+      target: p.target,
+      token: state.renderToken,
+      initial: false,
+      loadingTimer: null,
+    });
+  } else {
+    state.currentPage = p.page;
+    const oldSpread = getSpreadPages(p.page);
+    const layout = computeBookLayout();
+    if (layout) {
+      await paintBookCanvas(
+        dom.canvas,
+        state.pdf,
+        oldSpread,
+        layout,
+        { token: state.renderToken },
+      );
+    }
+    finishBookRender({
+      start: p.page,
+      pages: oldSpread,
+      target: p.page,
+      token: state.renderToken,
+      initial: false,
+      loadingTimer: null,
+    });
+  }
+  updatePageUI();
+  hidePeel();
+}
+
+function cancelPeel() {
+  if (!state.peel?.active) return;
+  state.peel = null;
+  hidePeel();
+}
+
 async function renderBookSpread(
   pageNumber,
   { animate = false, force = false, initial = false } = {},
@@ -2273,7 +2542,7 @@ function beginPageTurn(direction) {
 }
 
 async function renderPage(pageNumber, options = {}) {
-  if (!state.pdf) return;
+  if (!state.pdf || state.peel?.active) return;
   if (effectiveLayout() === "book" && state.pageSize) {
     return renderBookSpread(pageNumber, options);
   }
@@ -2692,6 +2961,8 @@ async function destroyPdf() {
   if (dom.pageWrap) clearPageTurn();
   clearPageFade();
   hideLeaf();
+  cancelPeel();
+  state.peel = null;
   if (dom.canvas) {
     dom.canvas.width = 1;
     dom.canvas.height = 1;
