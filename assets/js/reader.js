@@ -81,11 +81,12 @@ const WIDTH_LIMITS = {
 
 const FIT_MODES = new Set(["width", "page"]);
 const PANELS = new Set(["pages", "search", "bookmarks", "settings"]);
-const LAYOUTS = new Set(["single", "book"]);
+const LAYOUTS = new Set(["single", "book", "scroll"]);
 const DIRECTIONS = new Set(["ltr", "rtl"]);
 const EFFECTS = new Set(["3d", "2d"]);
 const MOBILE_BOOK_BREAKPOINT = 760;
 const LEAF_TURN_MS = 640;
+const SCROLL_PAGE_GAP = 24;
 
 const SEARCH_HINT =
   "Search the full text of this PDF. Results jump straight to the page.";
@@ -103,6 +104,7 @@ const dom = {
   peel: $("#reader-peel"),
   peelFront: $("#pdf-peel-front"),
   peelBack: $("#pdf-peel-back"),
+  scrollWrap: $("#reader-scroll-wrap"),
   renderLoading: $("#reader-render-loading"),
   loading: $("#reader-loading"),
   loadingTitle: $("#reader-loading-title"),
@@ -174,6 +176,8 @@ const state = {
   pageSize: null,
   spreadStart: 0,
   spreadPages: [],
+  scrollPages: [],
+  scrollRendered: new Set(),
   peel: null,
 
   drawerOpen: false,
@@ -509,6 +513,7 @@ function isNarrowViewport() {
 }
 
 function effectiveLayout() {
+  if (state.layout === "scroll") return "scroll";
   if (state.layout !== "book") return "single";
   return isNarrowViewport() ? "single" : "book";
 }
@@ -538,8 +543,12 @@ function updateBookToggle() {
 function updateLayoutHint() {
   const hint = $("#layout-hint");
   if (!hint) return;
-  if (state.layout !== "book") {
+  if (state.layout === "single") {
     hint.textContent = "One page at a time, like a standard PDF viewer.";
+    return;
+  }
+  if (state.layout === "scroll") {
+    hint.textContent = "Pages flow continuously as you scroll.";
     return;
   }
   hint.textContent = isNarrowViewport()
@@ -575,9 +584,12 @@ function setLayout(layout, { persist = true } = {}) {
   state.lastRenderedPage = 0;
   state.spreadStart = 0;
   state.spreadPages = [];
+  state.scrollPages = [];
+  state.scrollRendered = new Set();
   hideLeaf();
   clearPageTurn();
   clearPageFade();
+  clearScrollMode();
   applyLayoutUI();
   scheduleRender(true);
 }
@@ -729,12 +741,9 @@ function updateReaderControlState() {
       state.totalPages > 0 &&
       document.body.dataset.readerState === "ready",
   );
-  const spread =
-    effectiveLayout() === "book"
-      ? getSpreadPages(state.currentPage)
-      : [state.currentPage];
-  const atStart = spread[0] <= 1;
-  const atEnd = spread[spread.length - 1] >= state.totalPages;
+  const layout = effectiveLayout();
+  const atStart = state.currentPage <= 1;
+  const atEnd = state.currentPage >= state.totalPages;
 
   $$("[data-reader-only]").forEach((element) => {
     const action = element.dataset.action;
@@ -1035,6 +1044,29 @@ function bindEvents() {
   { passive: false });
   window.addEventListener("touchend", () => {
     if (state.peel?.active) void endPeel();
+  });
+
+  /* Drag and drop: open a local PDF dropped onto the reader. */
+  const dropZone = document.body;
+  dropZone.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+    document.body.classList.add("reader-drag-over");
+  });
+  dropZone.addEventListener("dragleave", () => {
+    document.body.classList.remove("reader-drag-over");
+  });
+  dropZone.addEventListener("drop", async (event) => {
+    event.preventDefault();
+    document.body.classList.remove("reader-drag-over");
+    const files = event.dataTransfer.files;
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      showToast("That file does not look like a PDF.");
+      return;
+    }
+    await openLocalFile(file);
   });
 
   document.addEventListener("fullscreenchange", () => {
@@ -1649,6 +1681,14 @@ async function goToPage(pageNumber, { animate = true, force = false } = {}) {
     state.totalPages,
   );
   const layout = effectiveLayout();
+
+  if (layout === "scroll") {
+    state.currentPage = target;
+    updatePageUI();
+    await renderScrollMode(target, { animate: false });
+    return;
+  }
+
   const targetSpread =
     layout === "book" ? getSpreadStart(target) : target;
 
@@ -2107,7 +2147,249 @@ async function turnBookLeaf(previousStart, newStart, newPages, token) {
   return true;
 }
 
-function finishBookRender({ start, pages, target, token, initial, loadingTimer }) {
+/* --------------------------------------------------------------------------
+   Continuous scroll mode
+   -------------------------------------------------------------------------- */
+
+function clearScrollPages() {
+  if (!dom.scrollWrap) return;
+  dom.scrollWrap.innerHTML = "";
+  state.scrollRendered = new Set();
+  state.scrollPages = [];
+}
+
+async function renderScrollPage(pageNumber, token) {
+  if (!state.pdf || token !== state.renderToken) return null;
+  if (state.scrollRendered.has(pageNumber)) return null;
+
+  const pdfPage = await state.pdf.getPage(pageNumber);
+  if (token !== state.renderToken) return null;
+
+  const base = pdfPage.getViewport({ scale: 1 });
+  const { availableWidth } = stageMetrics();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const scale = Math.min(availableWidth / base.width, 2);
+  const viewport = pdfPage.getViewport({ scale: scale * dpr });
+
+  const img = document.createElement("img");
+  img.className = "reader-scroll__page";
+  img.alt = "";
+  img.style.width = `${availableWidth}px`;
+  img.style.height = "auto";
+  img.style.display = "block";
+  img.style.marginInline = "auto";
+  img.style.marginBottom = `${SCROLL_PAGE_GAP}px`;
+  img.style.background = "#ffffff";
+
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.floor(viewport.width));
+  canvas.height = Math.max(1, Math.floor(viewport.height));
+  const ctx = canvas.getContext("2d", { alpha: false });
+  if (!ctx) return null;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  await pdfPage.render({ canvasContext: ctx, viewport, background: "#ffffff" }).promise;
+
+  if (token !== state.renderToken) return null;
+
+  img.src = canvas.toDataURL("image/jpeg", 0.82);
+  state.scrollRendered.add(pageNumber);
+  return img;
+}
+
+function setupScrollObserver() {
+  if (!dom.scrollWrap || !("IntersectionObserver" in window)) return;
+
+  disconnectScrollObserver();
+  state.scrollObserver = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const img = entry.target;
+        const page = Number(img.dataset.scrollPage);
+        if (Number.isFinite(page) && !state.scrollRendered.has(page)) {
+          state.scrollObserver?.unobserve(img);
+          void renderScrollPage(page, state.renderToken).then((renderedImg) => {
+            if (renderedImg && renderedImg !== img) {
+              img.src = renderedImg.src;
+              img.style.width = renderedImg.style.width;
+              img.style.height = renderedImg.style.height;
+            }
+          });
+        }
+      }
+    },
+    { root: dom.stage || null, rootMargin: "300px 0px" },
+  );
+}
+
+function disconnectScrollObserver() {
+  if (!state.scrollObserver) return;
+  try {
+    state.scrollObserver.disconnect();
+  } catch {
+    /* Already disconnected. */
+  }
+  state.scrollObserver = null;
+}
+
+async function renderScrollMode(pageNumber, { initial = false } = {}) {
+  if (!state.pdf) return;
+  const target = clamp(Math.round(Number(pageNumber) || 1), 1, state.totalPages);
+
+  hideLeaf();
+  clearPageTurn();
+  clearPageFade();
+
+  if (!dom.scrollWrap) return;
+
+  dom.canvas.hidden = true;
+  if (dom.leaf) dom.leaf.hidden = true;
+  if (dom.peel) dom.peel.hidden = true;
+  dom.pageWrap.style.display = "none";
+  dom.scrollWrap.hidden = false;
+  dom.pageWrap.classList.remove("reader-page-wrap--book");
+
+  const token = ++state.renderToken;
+  state.currentPage = target;
+  state.lastRenderedPage = target;
+  updatePageUI();
+
+  /* Build page placeholders if not already built. */
+  if (dom.scrollWrap.children.length === 0) {
+    const fragment = document.createDocumentFragment();
+    for (let page = 1; page <= state.totalPages; page += 1) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "reader-scroll__page-wrap";
+      wrapper.style.height = "auto";
+      wrapper.style.display = "flex";
+      wrapper.style.flexDirection = "column";
+      wrapper.style.alignItems = "center";
+
+      const placeholder = document.createElement("div");
+      placeholder.className = "reader-scroll__placeholder";
+      placeholder.style.width = "100%";
+      placeholder.style.paddingBottom = "140%";
+      placeholder.style.background = "var(--r-bg-soft)";
+      placeholder.style.borderRadius = "1px";
+
+      const img = document.createElement("img");
+      img.className = "reader-scroll__page";
+      img.dataset.scrollPage = String(page);
+      img.alt = "";
+      img.style.width = "100%";
+      img.style.height = "auto";
+      img.style.display = "block";
+      img.style.marginInline = "auto";
+      img.style.marginBottom = `${SCROLL_PAGE_GAP}px`;
+      img.style.opacity = "0";
+      img.style.transition = "opacity 220ms var(--ease)";
+
+      wrapper.append(placeholder, img);
+      fragment.append(wrapper);
+    }
+    dom.scrollWrap.innerHTML = "";
+    dom.scrollWrap.append(fragment);
+    setupScrollObserver();
+  }
+
+  const imgs = dom.scrollWrap.querySelectorAll(".reader-scroll__page");
+  const targets = new Set([target]);
+  for (let offset = 1; offset <= 3; offset += 1) {
+    if (target + offset <= state.totalPages) targets.add(target + offset);
+    if (target - offset >= 1) targets.add(target - offset);
+  }
+
+  for (const img of imgs) {
+    const page = Number(img.dataset.scrollPage);
+    if (!targets.has(page)) continue;
+    if (state.scrollRendered.has(page)) continue;
+    void renderScrollPage(page, token).then((renderedImg) => {
+      if (renderedImg && token === state.renderToken && img.src !== renderedImg.src) {
+        img.src = renderedImg.src;
+        img.style.opacity = "1";
+      }
+    });
+  }
+
+  /* Scroll to the current page. */
+  const currentImg = dom.scrollWrap.querySelector(
+    `.reader-scroll__page[data-scroll-page="${target}"]`,
+  );
+  if (currentImg) {
+    currentImg.scrollIntoView({ block: "center", behavior: initial ? "auto" : "smooth" });
+  }
+
+  attachScrollProgressListener();
+
+  if (!initial) setBodyState("ready");
+  saveProgressDebounced();
+  prefetchNeighbors(target);
+}
+
+function updateScrollProgress() {
+  if (!dom.scrollWrap || !state.pdf) return;
+  const imgs = dom.scrollWrap.querySelectorAll(".reader-scroll__page");
+  if (!imgs.length) return;
+
+  const rect = dom.stage.getBoundingClientRect();
+  const stageCenterY = rect.top + rect.height / 2;
+
+  let nearestPage = 1;
+  let nearestDistance = Infinity;
+
+  for (const img of imgs) {
+    const pageRect = img.getBoundingClientRect();
+    const pageCenterY = pageRect.top + pageRect.height / 2;
+    const distance = Math.abs(pageCenterY - stageCenterY);
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearestPage = Number(img.dataset.scrollPage) || 1;
+    }
+  }
+
+  if (nearestPage !== state.currentPage) {
+    state.currentPage = nearestPage;
+    updatePageUI();
+  }
+}
+
+function attachScrollProgressListener() {
+  if (!dom.stage) return;
+  dom.stage.removeEventListener("scroll", handleScrollProgress);
+  dom.stage.addEventListener("scroll", handleScrollProgress, { passive: true });
+}
+
+let scrollProgressFrame = null;
+function handleScrollProgress() {
+  if (scrollProgressFrame) return;
+  scrollProgressFrame = requestAnimationFrame(() => {
+    scrollProgressFrame = null;
+    updateScrollProgress();
+  });
+}
+
+function detachScrollProgressListener() {
+  if (!dom.stage) return;
+  dom.stage.removeEventListener("scroll", handleScrollProgress);
+  if (scrollProgressFrame) {
+    cancelAnimationFrame(scrollProgressFrame);
+    scrollProgressFrame = null;
+  }
+}
+
+function clearScrollMode() {
+  detachScrollProgressListener();
+  disconnectScrollObserver();
+  clearScrollPages();
+  if (dom.scrollWrap) dom.scrollWrap.hidden = true;
+  if (dom.canvas) dom.canvas.hidden = false;
+  if (dom.pageWrap) {
+    dom.pageWrap.style.display = "";
+    dom.pageWrap.classList.add("reader-page-wrap--book");
+  }
+}
+
   if (token !== state.renderToken) return false;
   clearTimeout(loadingTimer);
   dom.renderLoading.hidden = true;
@@ -2543,7 +2825,11 @@ function beginPageTurn(direction) {
 
 async function renderPage(pageNumber, options = {}) {
   if (!state.pdf || state.peel?.active) return;
-  if (effectiveLayout() === "book" && state.pageSize) {
+  const layout = effectiveLayout();
+  if (layout === "scroll") {
+    return renderScrollMode(pageNumber, options);
+  }
+  if (layout === "book" && state.pageSize) {
     return renderBookSpread(pageNumber, options);
   }
   return renderSinglePage(pageNumber, options);
@@ -2956,6 +3242,7 @@ async function destroyPdf() {
   disconnectThumbObserver();
   resetThumbs();
   resetOutline();
+  clearScrollMode();
 
   if (dom.renderLoading) dom.renderLoading.hidden = true;
   if (dom.pageWrap) clearPageTurn();
@@ -3091,6 +3378,8 @@ async function onDocumentReady(pdf, book, token) {
   state.pageSize = null;
   state.spreadStart = 0;
   state.spreadPages = [];
+  state.scrollPages = [];
+  state.scrollRendered = new Set();
   state.thumbsBuilt = false;
   state.thumbsToken = -1;
   state.thumbCache.clear();

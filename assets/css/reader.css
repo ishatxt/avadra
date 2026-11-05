@@ -12,29 +12,28 @@ html:not([data-theme]) {
   color-scheme: dark;
   --r-bg: #060b11;
   --r-bg-soft: #0a131c;
-  --r-bg-deep: #04080d;
+  --r-bg-deep: #03060b;
   --r-surface: #0c1620;
-  --r-surface-2: #101d29;
+  --r-surface-2: #0f1923;
   --r-text: #e9e1d2;
-  --r-text-strong: #f8f1e4;
-  --r-muted: #a79d8c;
-  --r-faint: #756d60;
-  --r-gold: #c6a15b;
-  --r-gold-bright: #e1c78e;
-  --r-gold-deep: #8d6d3c;
-  --r-on-gold: #140e06;
-  --r-line: rgba(198, 161, 91, 0.16);
-  --r-line-strong: rgba(198, 161, 91, 0.34);
-  --r-hover: rgba(198, 161, 91, 0.09);
-  --r-active: rgba(198, 161, 91, 0.14);
+  --r-text-strong: #f2e8d6;
+  --r-muted: #9a8e7c;
+  --r-faint: #685f52;
+  --r-gold: #a88345;
+  --r-gold-bright: #c6a15b;
+  --r-gold-deep: #7e5d2e;
+  --r-on-gold: #120c04;
+  --r-line: rgba(168, 131, 69, 0.18);
+  --r-line-strong: rgba(168, 131, 69, 0.3);
+  --r-hover: rgba(168, 131, 69, 0.06);
+  --r-active: rgba(168, 131, 69, 0.1);
   --r-input-bg: #08111a;
-  --r-scrim: rgba(2, 6, 10, 0.64);
-  --r-danger: #d08a72;
-  --r-page-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.9), 0 2px 0 rgba(255, 255, 255, 0.04);
+  --r-scrim: rgba(2, 6, 10, 0.6);
+  --r-danger: #b07a62;
+  --r-page-shadow: 0 24px 48px -20px rgba(0, 0, 0, 0.8);
   --r-stage-bg:
-    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(198, 161, 91, 0.055), transparent 70%),
-    radial-gradient(ellipse 100% 80% at 50% 100%, rgba(9, 23, 34, 0.8), transparent 60%),
-    #050a0f;
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(168, 131, 69, 0.03), transparent 70%),
+    #05090e;
 }
 
 html[data-theme="parchment"] {
@@ -192,11 +191,11 @@ body.reader-page {
   flex: none;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  min-height: 68px;
-  padding: 8px clamp(12px, 2.2vw, 24px);
+  gap: 12px;
+  min-height: 56px;
+  padding: 6px clamp(12px, 2.2vw, 20px);
   border-bottom: 1px solid var(--r-line);
-  background: var(--r-surface);
+  background: var(--r-surface-2);
 }
 
 .reader-top__left {
@@ -256,37 +255,37 @@ body.reader-page {
 
 .reader-icon-btn {
   display: inline-flex;
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   flex: none;
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 0;
-  border-radius: 50%;
+  border: 1px solid transparent;
+  border-radius: 2px;
   background: transparent;
   color: var(--r-muted);
-  transition: background-color 160ms var(--ease), color 160ms var(--ease), opacity 160ms var(--ease);
+  transition: border-color 140ms var(--ease), color 140ms var(--ease), background-color 140ms var(--ease);
 }
 
 .reader-icon-btn svg {
-  width: 19px;
-  height: 19px;
+  width: 17px;
+  height: 17px;
 }
 
 .reader-icon-btn:hover {
+  border-color: var(--r-line-strong);
   background: var(--r-hover);
-  color: var(--r-gold-bright);
+  color: var(--r-text);
 }
 
-.reader-icon-btn.is-active {
+.reader-icon-btn:active {
   background: var(--r-active);
-  color: var(--r-gold-bright);
 }
 
 .reader-icon-btn:disabled,
 .reader-icon-btn[disabled] {
-  opacity: 0.26;
+  opacity: 0.3;
   pointer-events: none;
 }
 
@@ -307,8 +306,7 @@ body.reader-page {
   display: block;
   width: 0;
   height: 100%;
-  background: linear-gradient(90deg, var(--r-gold-deep), var(--r-gold-bright));
-  box-shadow: 0 0 10px rgba(225, 199, 142, 0.4);
+  background: var(--r-gold);
   transition: width 220ms var(--ease);
 }
 
@@ -388,10 +386,8 @@ body[data-reader-state="ready"] #pdf-canvas {
    painted page unfolds back into place. The page stays painted during the
    turn so the movement reads as a sheet rather than a fade. */
 .reader-page-wrap.is-turning #pdf-canvas {
-  filter: brightness(0.84) saturate(0.92);
-  box-shadow:
-    var(--r-page-shadow),
-    0 42px 90px -28px rgba(0, 0, 0, 0.85);
+  filter: brightness(0.86) saturate(0.94);
+  box-shadow: var(--r-page-shadow);
 }
 
 .reader-page-wrap.is-turning--next:not(.is-turning-leaf) #pdf-canvas {
@@ -522,6 +518,74 @@ body[data-reader-state="ready"] #pdf-canvas {
   height: 100%;
 }
 
+/* Continuous scroll mode */
+.reader-scroll-wrap {
+  display: none;
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+  padding: clamp(24px, 4vw, 60px) 0;
+  background: var(--r-stage-bg);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.reader-scroll-wrap .reader-scroll__page-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.reader-scroll-wrap .reader-scroll__placeholder {
+  width: 100%;
+  padding-bottom: 140%;
+  background: var(--r-bg-soft);
+  border-radius: 1px;
+}
+
+.reader-scroll-wrap .reader-scroll__page {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-inline: auto;
+  margin-bottom: var(--scroll-gap, 24px);
+  background: #ffffff;
+  border-radius: 1px;
+  box-shadow: var(--r-page-shadow);
+  opacity: 1;
+}
+
+body[data-view="scroll"] .reader-page-wrap,
+body[data-view="scroll"] .reader-arrow,
+body[data-view="scroll"] .reader-show-controls {
+  display: none !important;
+}
+
+body[data-view="scroll"] .reader-scroll-wrap {
+  display: block;
+}
+
+/* Drag and drop overlay */
+body.reader-drag-over {
+  overflow: hidden;
+}
+
+.reader-drag-over::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(6, 11, 17, 0.55);
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+  border: 2px dashed var(--r-line-strong);
+}
+
+.reader-drag-over .reader-stage {
+  pointer-events: none;
+}
+
 .reader-page-wrap.is-fading #pdf-canvas {
   opacity: 0;
 }
@@ -540,34 +604,33 @@ body[data-direction="rtl"] .reader-bottom [data-action="next"] svg {
   top: 50%;
   z-index: 6;
   display: inline-flex;
-  width: 46px;
-  height: 46px;
+  width: 40px;
+  height: 40px;
   align-items: center;
   justify-content: center;
   padding: 0;
   border: 1px solid var(--r-line);
-  border-radius: 50%;
-  background: var(--r-surface);
+  border-radius: 2px;
+  background: var(--r-surface-2);
   color: var(--r-text);
-  opacity: 0.82;
+  opacity: 0.75;
   transform: translateY(-50%);
-  box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.6);
-  transition: opacity 160ms var(--ease), color 160ms var(--ease), border-color 160ms var(--ease);
+  box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.5);
+  transition: border-color 140ms var(--ease), color 140ms var(--ease), opacity 140ms var(--ease);
 }
 
 .reader-arrow svg {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
 }
 
 .reader-arrow:hover {
-  border-color: var(--r-gold);
-  color: var(--r-gold-bright);
-  opacity: 1;
+  border-color: var(--r-line-strong);
+  color: var(--r-text-strong);
 }
 
 .reader-arrow:disabled {
-  opacity: 0.2;
+  opacity: 0.25;
   pointer-events: none;
 }
 
@@ -588,15 +651,15 @@ body[data-direction="rtl"] .reader-bottom [data-action="next"] svg {
   z-index: 7;
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 9px 15px;
+  gap: 8px;
+  padding: 8px 14px;
   border: 1px solid var(--r-line);
-  border-radius: 999px;
-  background: var(--r-surface);
+  border-radius: 2px;
+  background: var(--r-surface-2);
   color: var(--r-muted);
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   transform: translate(-50%, -50%);
-  box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.45);
 }
 
 .reader-spinner {
@@ -1236,11 +1299,11 @@ body.focus-mode .reader-show-controls:focus-visible {
   display: flex;
   flex: none;
   align-items: center;
-  gap: 16px;
-  min-height: 60px;
-  padding: 8px clamp(10px, 2vw, 18px);
+  gap: 12px;
+  min-height: 52px;
+  padding: 6px clamp(10px, 2vw, 16px);
   border-top: 1px solid var(--r-line);
-  background: var(--r-surface);
+  background: var(--r-surface-2);
 }
 
 .reader-bottom__left {
@@ -1367,9 +1430,7 @@ body.focus-mode .reader-show-controls:focus-visible {
   position: fixed;
   inset: 0;
   z-index: 70;
-  background: var(--r-scrim);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  background: rgba(2, 6, 10, 0.55);
 }
 
 .reader-drawer {
@@ -1379,14 +1440,14 @@ body.focus-mode .reader-show-controls:focus-visible {
   bottom: 0;
   z-index: 80;
   display: flex;
-  width: min(430px, 94vw);
+  width: min(420px, 92vw);
   flex-direction: column;
   border-left: 1px solid var(--r-line);
   background: var(--r-surface);
-  box-shadow: -34px 0 90px rgba(0, 0, 0, 0.45);
+  box-shadow: -20px 0 60px rgba(0, 0, 0, 0.35);
   transform: translateX(102%);
   visibility: hidden;
-  transition: transform 280ms var(--ease), visibility 280ms;
+  transition: transform 220ms var(--ease), visibility 220ms;
 }
 
 .reader-drawer.is-open {
@@ -1483,11 +1544,11 @@ body.focus-mode .reader-show-controls:focus-visible {
 }
 
 .reader-panel__heading {
-  color: var(--r-gold);
+  color: var(--r-gold-deep);
   font-family: var(--font-body);
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   font-weight: 500;
-  letter-spacing: 0.17em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
@@ -1848,19 +1909,19 @@ body.focus-mode .reader-show-controls:focus-visible {
   display: inline-flex;
   flex: 1 1 0;
   min-width: 70px;
-  min-height: 38px;
+  min-height: 36px;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 7px 8px;
+  gap: 6px;
+  padding: 6px 8px;
   border: 1px solid var(--r-line);
   border-radius: 2px;
   background: var(--r-bg-soft);
   color: var(--r-muted);
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   line-height: 1.2;
   text-align: center;
-  transition: border-color 160ms var(--ease), color 160ms var(--ease), background-color 160ms var(--ease);
+  transition: border-color 140ms var(--ease), color 140ms var(--ease), background-color 140ms var(--ease);
 }
 
 .reader-segmented button:hover {
@@ -1869,9 +1930,9 @@ body.focus-mode .reader-show-controls:focus-visible {
 }
 
 .reader-segmented button[aria-pressed="true"] {
-  border-color: var(--r-gold);
-  background: var(--r-active);
-  color: var(--r-gold-bright);
+  border-color: var(--r-gold-deep);
+  background: var(--r-hover);
+  color: var(--r-text-strong);
 }
 
 .reader-theme-swatch {
