@@ -130,6 +130,7 @@ function normaliseBook(raw) {
   const cover = safeLocalAsset(raw.cover);
   const file = safeLocalAsset(raw.file);
   const pages = parsePositiveInteger(raw.pages);
+  const format = cleanText(raw.format, 20).toLowerCase();
 
   if (!id || !title || !author || !category || !file) {
     return null;
@@ -149,6 +150,7 @@ function normaliseBook(raw) {
     curatorNote: cleanText(raw.curatorNote, 400),
     cover,
     file,
+    format: /^(pdf|epub)$/.test(format) ? format : "",
     pages,
     readingMinutes: parsePositiveInteger(raw.readingMinutes),
     editionContents: cleanText(raw.editionContents, 240),

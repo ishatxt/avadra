@@ -1,6 +1,6 @@
 # Third-party notices
 
-The Wizarding Library combines original interface code with third-party
+AVADRA combines original interface code with third-party
 open-source software. This file records the licences for that software. It is
 not legal advice. The Harry Potter novels and their cover art are not covered by
 any licence granted by this project.
@@ -20,18 +20,58 @@ The same notices are published as `notices.html`.
   not relicense DearFlip.
 - Project: <https://dearflip.com/>
 
-The reader in `flipbook.html` loads these files locally via
+The AVADRA Flipbook in `flipbook.html` loads these files locally via
 `window.dFlipLocation`.
+
+### Foliate-JS — EPUB and PDF reading engine
+
+- Files: `assets/vendor/foliate/` (including `view.js`, `epub.js`,
+  `epubcfi.js`, `paginator.js`, `fixed-layout.js`, `pdf.js`, `search.js`,
+  `progress.js`, `overlayer.js`, `ui/`, and the vendored dependencies listed
+  below)
+- Copyright: John Factotum and contributors
+- Licence: MIT
+- Full text: `assets/vendor/foliate/LICENSE`
+- Project: <https://github.com/johnfactotum/foliate-js>
+
+Foliate-JS is vendored from upstream and used by `foliate-reader.html`. The
+AVADRA controller in `assets/js/foliate-reader.js` is original project code.
+The vendored PDF adapter contains a small null-destination guard for PDFs whose
+outlines include headings without links; no other functional changes were made.
 
 ### Mozilla PDF.js
 
-- Files: `assets/vendor/dearflip/js/libs/pdf.min.js`,
-  `assets/vendor/dearflip/js/libs/pdf.worker.min.js`
+Two separate copies are served:
+
+- DearFlip's bundled copy: `assets/vendor/dearflip/js/libs/pdf.min.js` and
+  `pdf.worker.min.js`.
+- Foliate's copy: `assets/vendor/foliate/vendor/pdfjs/` (`pdf.mjs`,
+  `pdf.worker.mjs`, `cmaps/`, `standard_fonts/`, and layer stylesheets).
 - Copyright: Mozilla Foundation and contributors
 - Licence: Apache License 2.0
+- Full text: `assets/vendor/foliate/vendor/pdfjs/LICENSE` (Foliate copy); the
+  DearFlip copy carries its own bundled notice.
 - Project: <https://github.com/mozilla/pdf.js>
 
-The files are bundled with DearFlip and served locally.
+### zip.js
+
+- File: `assets/vendor/foliate/vendor/zip.js`
+- Copyright: Gildas Lormeau
+- Licence: BSD 3-Clause
+- Full text: `assets/vendor/foliate/vendor/LICENSE-zip.js.txt`
+- Project: <https://github.com/gildas-lormeau/zip.js>
+
+Used by Foliate to read EPUB, FBZ, and CBZ archives locally.
+
+### fflate
+
+- File: `assets/vendor/foliate/vendor/fflate.js`
+- Copyright: Arjun Barrett
+- Licence: MIT
+- Full text: `assets/vendor/foliate/vendor/LICENSE-fflate.txt`
+- Project: <https://github.com/101arrowz/fflate>
+
+Used by Foliate's MOBI/AZW3 support.
 
 ### three.js
 

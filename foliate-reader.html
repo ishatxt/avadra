@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self' blob: data:; script-src 'self'; style-src 'self' 'unsafe-inline' blob:; img-src 'self' blob: data:; font-src 'self' blob: data:; connect-src 'self' blob: data:; frame-src blob: data:; media-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none';"
+  >
+  <title>Foliate Reader &mdash; AVADRA</title>
+  <meta name="description" content="The Foliate reader for AVADRA.">
+  <meta name="theme-color" content="#091119">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/ibarra-real-nova-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/literata-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/css/reader.css">
+</head>
+<body data-reader-theme="book" data-book-kind="">
+  <a class="skip-link" href="#reader-stage">Skip to the book</a>
+
+  <div class="reader-shell">
+    <header class="avadra-reader-bar">
+      <a class="avadra-back" href="index.html" aria-label="Back to the AVADRA library">
+        <span aria-hidden="true">&larr;</span>
+        <span class="avadra-back__text">Library</span>
+      </a>
+      <span class="avadra-brand">
+        <svg viewBox="0 0 30 34" aria-hidden="true" fill="none">
+          <path d="M15 1.4c.42 3.72 2.2 5.5 5.9 5.92-3.7.42-5.48 2.2-5.9 5.92-.42-3.72-2.2-5.5-5.9-5.92 3.7-.42 5.48-2.2 5.9-5.92Z" fill="currentColor"/>
+          <path d="M3 17.3c3.9-1.5 8-1.2 12 .9v13.2c-4-2.1-8.1-2.4-12-.9V17.3ZM27 17.3c-3.9-1.5-8-1.2-12 .9v13.2c4-2.1 8.1-2.4 12-.9V17.3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+          <path d="M15 18.2v13.2" stroke="currentColor" stroke-width="1.3"/>
+        </svg>
+        <span>AVADRA</span>
+      </span>
+      <span class="avadra-reader-title" id="book-title">Opening the edition&hellip;</span>
+      <span class="avadra-engine">Foliate</span>
+    </header>
+
+    <main class="reader-stage" id="reader-stage">
+      <div id="view-container"></div>
+
+      <div id="dimming-overlay" aria-hidden="true"></div>
+
+      <aside id="side-bar" aria-label="Book navigation">
+        <div id="side-bar-header">
+          <img id="side-bar-cover" alt="">
+          <div class="side-bar-meta">
+            <p class="side-bar-kicker">Now reading</p>
+            <h1 id="side-bar-title"></h1>
+            <p id="side-bar-author"></p>
+          </div>
+        </div>
+
+        <div class="side-tabs" role="tablist" aria-label="Navigation panels">
+          <button id="toc-tab" type="button" role="tab" aria-selected="true" aria-controls="toc-panel">
+            Contents
+          </button>
+          <button id="search-tab" type="button" role="tab" aria-selected="false" aria-controls="search-panel">
+            Search
+          </button>
+        </div>
+
+        <div id="toc-panel" class="side-panel" role="tabpanel" aria-labelledby="toc-tab">
+          <div id="toc-view"></div>
+          <p id="toc-empty" class="side-empty" hidden>This book does not include a table of contents.</p>
+        </div>
+
+        <div id="search-panel" class="side-panel" role="tabpanel" aria-labelledby="search-tab" hidden>
+          <form id="search-form" class="search-form" role="search">
+            <label class="search-label" for="search-input">Search inside this book</label>
+            <div class="search-row">
+              <input id="search-input" type="search" autocomplete="off" spellcheck="false" placeholder="A word or phrase">
+              <button class="search-submit" type="submit">Search</button>
+            </div>
+            <label class="search-option">
+              <input id="search-whole" type="checkbox">
+              <span>Whole words only</span>
+            </label>
+          </form>
+          <p id="search-status" class="search-status" aria-live="polite">
+            Search is available for reflowable EPUB editions.
+          </p>
+          <div id="search-results" class="search-results"></div>
+        </div>
+      </aside>
+
+      <div id="header-bar" class="toolbar">
+        <div class="toolbar-group">
+          <button id="side-bar-button" type="button" aria-label="Show contents" title="Contents (t)">
+            <svg class="icon" width="24" height="24" aria-hidden="true">
+              <path d="M 4 6 h 16 M 4 12 h 16 M 4 18 h 16"/>
+            </svg>
+          </button>
+          <button id="search-button" type="button" aria-label="Search this book" title="Search (s)">
+            <svg class="icon" width="24" height="24" aria-hidden="true">
+              <circle cx="10.5" cy="10.5" r="6.5"/>
+              <path d="m 15.5 15.5 5 5"/>
+            </svg>
+          </button>
+        </div>
+        <div class="toolbar-group">
+          <button id="fullscreen-button" type="button" aria-label="Enter fullscreen" title="Fullscreen (f)">
+            <svg class="icon" width="24" height="24" aria-hidden="true">
+              <path d="M 9 4 H 4 v 5 M 15 4 h 5 v 5 M 20 15 v 5 h -5 M 4 15 v 5 h 5"/>
+            </svg>
+          </button>
+          <div id="menu-button" class="menu-container">
+            <button id="settings-button" type="button" aria-label="Reading settings" aria-haspopup="dialog" aria-expanded="false" title="Reading settings">
+              <svg class="icon" width="24" height="24" aria-hidden="true">
+                <path d="M5 12.7a7 7 0 0 1 0-1.4l-1.8-2 2-3.5 2.7.5a7 7 0 0 1 1.2-.7L10 3h4l.9 2.6 1.2.7 2.7-.5 2 3.4-1.8 2a7 7 0 0 1 0 1.5l1.8 2-2 3.5-2.7-.5a7 7 0 0 1-1.2.7L14 21h-4l-.9-2.6a7 7 0 0 1-1.2-.7l-2.7.5-2-3.4 1.8-2Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+
+            <div id="settings-panel" class="settings-menu" role="dialog" aria-label="Reading settings" hidden>
+              <p class="settings-heading">Reading appearance</p>
+
+              <div class="settings-group">
+                <label for="setting-theme">Theme</label>
+                <select id="setting-theme">
+                  <option value="book">Book &mdash; publisher colours</option>
+                  <option value="paper">Paper</option>
+                  <option value="sepia">Sepia</option>
+                  <option value="night">Night</option>
+                </select>
+              </div>
+
+              <div class="settings-group settings-reflow">
+                <label for="setting-font">Font family</label>
+                <select id="setting-font">
+                  <option value="publisher">Publisher's font</option>
+                  <option value="literata">Literata</option>
+                  <option value="serif">Book serif</option>
+                  <option value="sans">Clear sans</option>
+                </select>
+              </div>
+
+              <div class="settings-group settings-reflow">
+                <label for="setting-fontsize">Font size <output id="setting-fontsize-value" for="setting-fontsize">100%</output></label>
+                <input id="setting-fontsize" type="range" min="80" max="160" step="10" value="100">
+              </div>
+
+              <div class="settings-group settings-reflow">
+                <label for="setting-spacing">Line spacing <output id="setting-spacing-value" for="setting-spacing">1.4</output></label>
+                <input id="setting-spacing" type="range" min="1.1" max="2" step="0.05" value="1.4">
+              </div>
+
+              <div class="settings-group settings-reflow">
+                <label for="setting-margins">Margins</label>
+                <select id="setting-margins">
+                  <option value="narrow">Narrow</option>
+                  <option value="standard">Standard</option>
+                  <option value="wide">Wide</option>
+                </select>
+              </div>
+
+              <div class="settings-group settings-reflow">
+                <label for="setting-layout">Layout</label>
+                <select id="setting-layout">
+                  <option value="paginated">Paginated</option>
+                  <option value="scrolled">Scrolled</option>
+                </select>
+              </div>
+
+              <div class="settings-group settings-zoom">
+                <label for="setting-zoom">Zoom</label>
+                <select id="setting-zoom">
+                  <option value="fit-page">Fit page</option>
+                  <option value="fit-width">Fit width</option>
+                  <option value="1">100%</option>
+                  <option value="1.25">125%</option>
+                  <option value="1.5">150%</option>
+                  <option value="2">200%</option>
+                </select>
+              </div>
+
+              <div class="settings-toggles settings-reflow">
+                <label><input id="setting-justify" type="checkbox"> <span>Justify text</span></label>
+                <label><input id="setting-hyphenate" type="checkbox"> <span>Hyphenate</span></label>
+              </div>
+
+              <p class="settings-note" id="settings-note"></p>
+              <button id="settings-reset" class="settings-reset" type="button">Reset appearance</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="nav-bar" class="toolbar">
+        <button id="left-button" type="button" aria-label="Go left" title="Previous page (←)">
+          <svg class="icon" width="24" height="24" aria-hidden="true">
+            <path d="M 15 6 L 9 12 L 15 18"/>
+          </svg>
+        </button>
+        <input id="progress-slider" type="range" min="0" max="1" step="any" list="tick-marks" aria-label="Reading position">
+        <span id="location-label" class="location-label" aria-live="polite"></span>
+        <button id="right-button" type="button" aria-label="Go right" title="Next page (→)">
+          <svg class="icon" width="24" height="24" aria-hidden="true">
+            <path d="M 9 6 L 15 12 L 9 18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div id="loading" class="reader-overlay">
+        <div class="loading-card">
+          <span class="loading-spinner" aria-hidden="true"></span>
+          <p id="loading-message">Preparing your book&hellip;</p>
+          <p class="loading-hint">Only the selected edition is loaded.</p>
+        </div>
+      </div>
+
+      <section id="error-panel" class="reader-message" role="alert" hidden>
+        <p class="message-kicker">Reader unavailable</p>
+        <h1 id="error-title">The book could not be opened.</h1>
+        <p id="error-text"></p>
+        <div class="message-actions">
+          <a class="message-button message-button--solid" href="index.html">Back to the library</a>
+          <a class="message-button" id="flipbook-fallback" href="index.html" hidden>Open the flipbook</a>
+          <button class="message-button" id="retry-button" type="button" hidden>Try again</button>
+        </div>
+      </section>
+
+      <section id="empty-state" class="reader-message" hidden>
+        <p class="message-kicker">Foliate Reader</p>
+        <h1>Choose a volume to begin.</h1>
+        <p>Open a book from the AVADRA library, or choose a local EPUB or PDF from this device. Local books are not saved to the library.</p>
+        <div class="message-actions">
+          <a class="message-button message-button--solid" href="index.html">Browse the library</a>
+          <button class="message-button" id="file-button" type="button">Open a local book</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <input id="file-input" type="file" accept=".epub,.pdf,.mobi,.azw3,.azw,.fb2,.fbz,.cbz,application/epub+zip,application/pdf" hidden>
+  <datalist id="tick-marks"></datalist>
+
+  <script type="module" src="assets/js/foliate-reader.js"></script>
+</body>
+</html>

@@ -55,6 +55,9 @@ const dom = {
   dialog: document.querySelector("#book-dialog"),
   dialogVisual: document.querySelector("#book-dialog-visual"),
   dialogBody: document.querySelector("#book-dialog-body"),
+  readerDialog: document.querySelector("#reader-dialog"),
+  readerDialogVisual: document.querySelector("#reader-dialog-visual"),
+  readerDialogBody: document.querySelector("#reader-dialog-body"),
 };
 
 function icon(name, className = "") {
@@ -64,6 +67,38 @@ function icon(name, className = "") {
 
 function readHref(book) {
   return `flipbook.html?book=${encodeURIComponent(book.id)}`;
+}
+
+function foliateHref(book) {
+  return `foliate-reader.html?book=${encodeURIComponent(book.id)}`;
+}
+
+/** Every read link opens the reader chooser; the href is the no-JS fallback. */
+function readLinkAttributes(book) {
+  return `href="${readHref(book)}" data-read-book="${escapeHtml(book.id)}"`;
+}
+
+function isPdfBook(book) {
+  if (book.format === "pdf") return true;
+  if (book.format === "epub") return false;
+  return /\.pdf(?:$|[?#])/i.test(book.file || "");
+}
+
+function isEpubBook(book) {
+  if (book.format === "epub") return true;
+  if (book.format === "pdf") return false;
+  return /\.epub(?:$|[?#])/i.test(book.file || "");
+}
+
+function progressLabel(progress) {
+  if (!progress) return "Not started yet";
+  if (progress.page && progress.totalPages) {
+    return `Page ${progress.page} of ${progress.totalPages}`;
+  }
+  if (typeof progress.fraction === "number") {
+    return `${Math.max(1, Math.round(progress.fraction * 100))}% read`;
+  }
+  return "Not started yet";
 }
 
 function truncated(value, length = 64) {
@@ -115,13 +150,23 @@ function lengthLabel(book) {
 function progressMarkup(book) {
   const progress = getProgress(book.id);
   if (!progress) return "";
-  const percent = Math.max(1, Math.min(100, Math.round((progress.page / progress.totalPages) * 100)));
+  const percent =
+    progress.page && progress.totalPages
+      ? (progress.page / progress.totalPages) * 100
+      : typeof progress.fraction === "number"
+        ? progress.fraction * 100
+        : 0;
+  const rounded = Math.max(1, Math.min(100, Math.round(percent)));
+  const label =
+    progress.page && progress.totalPages
+      ? `Page ${progress.page} of ${progress.totalPages} · ${rounded}% read`
+      : `${rounded}% read`;
   return `
     <div class="book-card__progress">
       <div class="book-card__progress-track" aria-hidden="true">
-        <span class="book-card__progress-fill" style="width:${percent}%"></span>
+        <span class="book-card__progress-fill" style="width:${rounded}%"></span>
       </div>
-      <span class="book-card__progress-label">Page ${progress.page} of ${progress.totalPages} · ${percent}% read</span>
+      <span class="book-card__progress-label">${label}</span>
     </div>`;
 }
 
@@ -151,7 +196,7 @@ function bookCardMarkup(book) {
           <span>${lengthLabel(book)}</span>
           <a
             class="book-card__read"
-            href="${readHref(book)}"
+            ${readLinkAttributes(book)}
             aria-label="${progress ? "Resume" : "Read"} ${escapeHtml(book.title)}"
           ><span>${progress ? "Resume" : "Read"}</span>${icon("arrow-right")}</a>
         </div>
@@ -165,7 +210,7 @@ function featureMarkup(book) {
     book.featuredQuote ||
     (book.curatorNote ? { text: book.curatorNote, attribution: "A note from the curator" } : null);
   const meta = [volumeLabel(book), book.series, book.year].filter(Boolean).join(" · ");
-  const action = progress ? `Continue at page ${progress.page}` : "Start reading";
+  const action = progress ? `Continue · ${progressLabel(progress)}` : "Start reading";
   const contents = book.editionContents
     ? `${book.editionContents} · ${lengthLabel(book)}`
     : lengthLabel(book);
@@ -195,7 +240,7 @@ function featureMarkup(book) {
       }
       <p class="feature-panel__summary">${escapeHtml(book.description || book.summary)}</p>
       <div class="feature-panel__actions">
-        <a class="btn btn--gold" href="${readHref(book)}">
+        <a class="btn btn--gold" ${readLinkAttributes(book)}>
           ${action}
           ${icon("arrow-right")}
         </a>
@@ -210,7 +255,7 @@ function featureMarkup(book) {
 function recentItemMarkup(book) {
   return `
     <article class="recent-item" style="${getCategoryStyle(book.category)}">
-      <a class="recent-item__cover-link" href="${readHref(book)}" aria-label="Read ${escapeHtml(book.title)}">
+      <a class="recent-item__cover-link" ${readLinkAttributes(book)} aria-label="Choose a reader for ${escapeHtml(book.title)}">
         ${coverMarkup(book)}
       </a>
       <div class="recent-item__body">
@@ -219,12 +264,12 @@ function recentItemMarkup(book) {
           ${book.year ? `<span>${book.year}</span>` : ""}
           <span>${escapeHtml(book.editionContents || "Full novel")}</span>
         </p>
-        <h3><a href="${readHref(book)}">${escapeHtml(book.title)}</a></h3>
+        <h3><a ${readLinkAttributes(book)}>${escapeHtml(book.title)}</a></h3>
         <p class="recent-item__author">${escapeHtml(book.author)}</p>
         <p class="recent-item__summary">${escapeHtml(book.summary)}</p>
       </div>
       <div class="recent-item__action">
-        <a class="text-link" href="${readHref(book)}">Start reading ${icon("arrow-right")}</a>
+        <a class="text-link" ${readLinkAttributes(book)}>Choose a reader ${icon("arrow-right")}</a>
       </div>
     </article>`;
 }
@@ -391,7 +436,7 @@ function renderAll() {
 }
 
 function showCatalogueError(error) {
-  console.error("The Wizarding Library catalogue error:", error);
+  console.error("AVADRA catalogue error:", error);
 
   const isFile = error?.code === "file-protocol";
   const isHttp = error?.code === "http-error";
@@ -441,9 +486,17 @@ function refreshResumeLinks() {
   if (!book || !progress) {
     dom.navResume.hidden = true;
     dom.heroResume.hidden = true;
+    dom.navResume.removeAttribute("data-read-book");
+    dom.heroResume.removeAttribute("data-read-book");
     const firstBook = state.catalogue.books[0];
     if (dom.footerReader) {
-      dom.footerReader.href = firstBook ? readHref(firstBook) : "index.html#collection";
+      if (firstBook) {
+        dom.footerReader.href = readHref(firstBook);
+        dom.footerReader.dataset.readBook = firstBook.id;
+      } else {
+        dom.footerReader.href = "index.html#collection";
+        delete dom.footerReader.dataset.readBook;
+      }
     }
     return;
   }
@@ -451,17 +504,23 @@ function refreshResumeLinks() {
   const href = readHref(book);
   const navLabel = dom.navResume.querySelector("[data-nav-resume-label]");
   const heroLabel = dom.heroResume.querySelector("[data-hero-resume-label]");
+  const place = progressLabel(progress);
   dom.navResume.href = href;
   dom.heroResume.href = href;
+  dom.navResume.dataset.readBook = book.id;
+  dom.heroResume.dataset.readBook = book.id;
   dom.navResume.hidden = false;
   dom.heroResume.hidden = false;
   if (navLabel) navLabel.textContent = "Resume reading";
   if (heroLabel) {
-    heroLabel.textContent = `Continue “${truncated(book.title, 44)}” · page ${progress.page}`;
+    heroLabel.textContent = `Continue “${truncated(book.title, 44)}” · ${place}`;
   }
-  dom.navResume.setAttribute("aria-label", `Resume ${book.title} at page ${progress.page}`);
-  dom.heroResume.setAttribute("aria-label", `Resume ${book.title} at page ${progress.page}`);
-  if (dom.footerReader) dom.footerReader.href = href;
+  dom.navResume.setAttribute("aria-label", `Resume ${book.title} at ${place}`);
+  dom.heroResume.setAttribute("aria-label", `Resume ${book.title} at ${place}`);
+  if (dom.footerReader) {
+    dom.footerReader.href = href;
+    dom.footerReader.dataset.readBook = book.id;
+  }
 }
 
 function refreshPersonalisation() {
@@ -565,7 +624,7 @@ function openBookDialog(bookId) {
   if (!book) return;
 
   const progress = getProgress(book.id);
-  const action = progress ? `Continue at page ${progress.page}` : "Begin reading";
+  const action = progress ? `Continue · ${progressLabel(progress)}` : "Choose a reader";
   const source = book.source;
   const sourceMarkup = source.url
     ? `<a href="${escapeHtml(source.url)}" target="_blank" rel="noopener">${escapeHtml(
@@ -625,15 +684,11 @@ function openBookDialog(bookId) {
       </div>
       <div>
         <dt>Your place</dt>
-        <dd>${
-          progress
-            ? `Page ${progress.page} of ${progress.totalPages}`
-            : "Not started yet"
-        }</dd>
+        <dd>${progressLabel(progress)}</dd>
       </div>
     </dl>
     <div class="book-dialog__actions">
-      <a class="btn btn--ink" href="${readHref(book)}">
+      <a class="btn btn--ink" ${readLinkAttributes(book)}>
         ${action}
         ${icon("arrow-right")}
       </a>
@@ -662,14 +717,173 @@ function closeDialog() {
     dom.dialog.close();
   } else {
     dom.dialog.removeAttribute("open");
+    if (!dom.readerDialog?.open) document.body.classList.remove("has-dialog");
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Reader selection
+   -------------------------------------------------------------------------- */
+
+let selectionTrigger = null;
+
+function readerOptionMarkup({
+  choice,
+  href,
+  title,
+  description,
+  meta,
+  iconName,
+  disabled = false,
+  disabledReason = "",
+}) {
+  const inner = `
+    <span class="reader-option__icon">${icon(iconName)}</span>
+    <span class="reader-option__body">
+      <span class="reader-option__title">${escapeHtml(title)}</span>
+      <span class="reader-option__description">${escapeHtml(description)}</span>
+      <span class="reader-option__meta">${escapeHtml(disabled ? disabledReason : meta)}</span>
+    </span>
+    ${
+      disabled
+        ? `<span class="reader-option__status">Unavailable</span>`
+        : `<span class="reader-option__go" aria-hidden="true">${icon("arrow-right")}</span>`
+    }`;
+
+  if (disabled) {
+    return `<div class="reader-option reader-option--disabled" aria-disabled="true">${inner}</div>`;
+  }
+
+  return `
+    <a
+      class="reader-option"
+      href="${href}"
+      target="_blank"
+      rel="noopener"
+      data-reader-choice="${escapeHtml(choice)}"
+      aria-label="Open ${escapeHtml(title)} in a new tab"
+    >${inner}</a>`;
+}
+
+function openReaderSelection(bookId) {
+  if (!state.catalogue || !dom.readerDialog) return;
+  const book = state.catalogue.books.find((item) => item.id === bookId);
+  if (!book) return;
+
+  selectionTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  closeDialog();
+
+  const progress = getProgress(book.id);
+  const pdf = isPdfBook(book);
+  const epub = isEpubBook(book);
+  const flipbook = pdf;
+  const foliate = pdf || epub;
+
+  dom.readerDialogVisual.innerHTML = coverMarkup(book, { eager: true });
+  dom.readerDialogBody.innerHTML = `
+    <p class="reader-dialog__kicker">
+      ${icon("spark")}
+      Choose a reading room
+    </p>
+    <h2 class="reader-dialog__title" id="reader-dialog-title">${escapeHtml(book.title)}</h2>
+    <p class="reader-dialog__author">${escapeHtml(book.author)} · ${escapeHtml(volumeLabel(book))}</p>
+    <p class="reader-dialog__place">
+      ${icon("bookmark")}
+      <span>${escapeHtml(progressLabel(progress))}</span>
+    </p>
+
+    <div class="reader-dialog__options">
+      ${readerOptionMarkup({
+        choice: "flipbook",
+        href: readHref(book),
+        title: "AVADRA Flipbook",
+        description:
+          "The familiar page-turn reader: animated spreads, thumbnails, search, and fullscreen.",
+        meta: "DearFlip · opens in a new tab",
+        iconName: "book-open",
+        disabled: !flipbook,
+        disabledReason: "This edition is an EPUB. Open it in the Foliate Reader.",
+      })}
+      ${readerOptionMarkup({
+        choice: "foliate",
+        href: foliateHref(book),
+        title: "Foliate Reader",
+        description:
+          "A quieter reader with a contents panel, appearance controls, page navigation, zoom, and fullscreen.",
+        meta: "Foliate-JS · opens in a new tab",
+        iconName: "spark",
+        disabled: !foliate,
+        disabledReason: "Foliate-JS does not support this file type.",
+      })}
+    </div>
+
+    <p class="reader-dialog__note">
+      Both readers keep one shared position for this book, so you can move
+      between them without losing your place. AVADRA always asks again next
+      time; your choice is not remembered.
+    </p>
+    <button class="text-link reader-dialog__back" type="button" data-close-reader-dialog>
+      Back to the shelf
+    </button>`;
+
+  dom.readerDialog.scrollTop = 0;
+  document.body.classList.add("has-dialog");
+  if (!dom.readerDialog.open) {
+    if (typeof dom.readerDialog.showModal === "function") {
+      dom.readerDialog.showModal();
+    } else {
+      dom.readerDialog.setAttribute("open", "");
+    }
+  }
+}
+
+function closeReaderSelection() {
+  if (!dom.readerDialog) return;
+  if (dom.readerDialog.open && typeof dom.readerDialog.close === "function") {
+    dom.readerDialog.close();
+  } else {
+    dom.readerDialog.removeAttribute("open");
     document.body.classList.remove("has-dialog");
   }
+}
+
+function setupReaderSelection() {
+  if (!dom.readerDialog) return;
+
+  dom.readerDialog.addEventListener("click", (event) => {
+    if (event.target === dom.readerDialog) {
+      closeReaderSelection();
+      return;
+    }
+    if (event.target.closest("[data-close-reader-dialog]")) {
+      closeReaderSelection();
+      return;
+    }
+    // The link itself opens a new tab. Let that happen, then tidy the dialog
+    // on the library tab so the homepage is left as it was found.
+    if (event.target.closest("[data-reader-choice]")) {
+      window.setTimeout(closeReaderSelection, 0);
+    }
+  });
+
+  dom.readerDialog.addEventListener("close", () => {
+    document.body.classList.remove("has-dialog");
+    if (selectionTrigger?.isConnected) selectionTrigger.focus();
+    selectionTrigger = null;
+  });
 }
 
 function setupDialog() {
   if (!dom.dialog) return;
 
   document.addEventListener("click", (event) => {
+    const readTrigger = event.target.closest("[data-read-book]");
+    if (readTrigger) {
+      event.preventDefault();
+      openReaderSelection(readTrigger.dataset.readBook);
+      return;
+    }
+
     const trigger = event.target.closest("[data-book-id]");
     if (trigger) {
       event.preventDefault();
@@ -698,7 +912,7 @@ function setupDialog() {
   });
 
   dom.dialog.addEventListener("close", () => {
-    document.body.classList.remove("has-dialog");
+    if (!dom.readerDialog?.open) document.body.classList.remove("has-dialog");
   });
 }
 
@@ -780,6 +994,7 @@ function setupStorageSync() {
 setupNavigation();
 setupCollectionControls();
 setupDialog();
+setupReaderSelection();
 setupImageFallback();
 setupStorageSync();
 loadCatalogueIntoPage();

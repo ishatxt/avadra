@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Reading Room — The Wizarding Library</title>
-  <meta name="description" content="The page-flip reading room for The Wizarding Library.">
+  <title>Reading Room — AVADRA</title>
+  <meta name="description" content="The page-flip reading room for AVADRA.">
   <meta name="theme-color" content="#091119">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/vendor/dearflip/js/jquery.min.js" as="script">
@@ -149,7 +149,9 @@
   <script src="assets/vendor/dearflip/js/jquery.min.js"></script>
   <script>window.dFlipLocation = "assets/vendor/dearflip/";</script>
   <script src="assets/vendor/dearflip/js/dflip.min.js"></script>
-  <script>
+  <script type="module">
+    import { getProgressFresh, saveProgress as saveReadingProgress } from "./assets/js/storage.js";
+
     (function () {
       var bookId = new URLSearchParams(window.location.search).get("book");
       var stage = document.getElementById("fb-stage");
@@ -171,14 +173,10 @@
       }
 
       var pdfPath = "books/" + encodeURIComponent(bookId) + ".pdf";
-      var STORAGE_KEY = "wizarding-library:v1";
 
       function readSavedPage() {
         try {
-          var raw = window.localStorage.getItem(STORAGE_KEY);
-          if (!raw) return null;
-          var state = JSON.parse(raw);
-          var entry = state && state.progress ? state.progress[bookId] : null;
+          var entry = getProgressFresh(bookId);
           var page = entry ? Number(entry.page) : NaN;
           return page > 1 ? Math.round(page) : null;
         } catch (error) {
@@ -188,26 +186,13 @@
 
       function saveProgress(page, totalPages) {
         if (!page || !totalPages) return;
-        try {
-          var raw = window.localStorage.getItem(STORAGE_KEY);
-          var state;
-          if (raw) {
-            state = JSON.parse(raw);
-          } else {
-            state = { version: 1, lastBook: null, progress: {} };
-          }
-          if (!state || typeof state !== "object") return;
-          if (!state.progress || typeof state.progress !== "object") state.progress = {};
-          state.lastBook = bookId;
-          state.progress[bookId] = {
-            page: Math.min(page, totalPages),
-            totalPages: totalPages,
-            updatedAt: new Date().toISOString()
-          };
-          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        } catch (error) {
-          /* Storage is optional; never block reading on it. */
-        }
+        saveReadingProgress(bookId, {
+          page: Math.min(page, totalPages),
+          totalPages: totalPages,
+          fraction: page / totalPages,
+          kind: "pdf",
+          engine: "dearflip"
+        });
       }
 
       function trackProgress() {
@@ -234,7 +219,7 @@
           if (!book) return;
           titleEl.textContent = book.title;
           authorEl.textContent = book.author ? "by " + book.author : "";
-          document.title = book.title + " — The Wizarding Library";
+          document.title = book.title + " — AVADRA";
         })
         .catch(function () {});
 
@@ -322,17 +307,14 @@
       }
 
       // Wait for jQuery's ready cycle so DearFlip's own parser runs first.
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", function () {
-          createBook();
-          start();
-          checkAvailability();
-        });
-      } else {
+      function boot() {
         createBook();
         start();
         checkAvailability();
       }
+
+      if (document.readyState === "complete") boot();
+      else window.addEventListener("load", boot, { once: true });
     })();
   </script>
 </body>

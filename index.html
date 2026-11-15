@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>The Wizarding Library — Seven volumes, kept lit</title>
+  <title>AVADRA — Seven volumes, kept lit</title>
   <meta name="description" content="An unofficial personal reading room for the seven Harry Potter novels. Read in order in a quiet browser reader that remembers your place.">
   <meta name="theme-color" content="#091119">
-  <meta property="og:title" content="The Wizarding Library">
+  <meta property="og:title" content="AVADRA">
   <meta property="og:description" content="Seven volumes, kept lit. A personal Harry Potter reading room with a reader that remembers your place.">
   <meta property="og:type" content="website">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
@@ -22,13 +22,13 @@
 
   <header class="site-header" id="top">
     <div class="container site-header__inner">
-      <a class="brand" href="./" aria-label="The Wizarding Library, home">
+      <a class="brand" href="./" aria-label="AVADRA, home">
         <svg class="brand__mark" viewBox="0 0 30 34" aria-hidden="true" fill="none">
           <path d="M15 1.4c.42 3.72 2.2 5.5 5.9 5.92-3.7.42-5.48 2.2-5.9 5.92-.42-3.72-2.2-5.5-5.9-5.92 3.7-.42 5.48-2.2 5.9-5.92Z" fill="currentColor"/>
           <path d="M3 17.3c3.9-1.5 8-1.2 12 .9v13.2c-4-2.1-8.1-2.4-12-.9V17.3ZM27 17.3c-3.9-1.5-8-1.2-12 .9v13.2c4-2.1 8.1-2.4 12-.9V17.3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
           <path d="M15 18.2v13.2" stroke="currentColor" stroke-width="1.3"/>
         </svg>
-        <span class="brand__name">The Wizarding Library</span>
+        <span class="brand__name">AVADRA</span>
       </a>
 
       <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
@@ -264,7 +264,7 @@
           <p class="provenance__mark">About this shelf</p>
           <h2 id="provenance-title">A private shelf, not an official edition.</h2>
           <p>
-            The Wizarding Library is an unofficial, personal catalogue of the seven
+            AVADRA is an unofficial, personal catalogue of the seven
             Harry Potter novels. It is not affiliated with J. K. Rowling, Bloomsbury,
             Scholastic, Warner Bros., or any other rights holder.
           </p>
@@ -316,13 +316,13 @@
     <div class="container">
       <div class="site-footer__top">
         <div class="site-footer__brand-col">
-          <a class="brand" href="#top" aria-label="The Wizarding Library, back to top">
+          <a class="brand" href="#top" aria-label="AVADRA, back to top">
             <svg class="brand__mark" viewBox="0 0 30 34" aria-hidden="true" fill="none">
               <path d="M15 1.4c.42 3.72 2.2 5.5 5.9 5.92-3.7.42-5.48 2.2-5.9 5.92-.42-3.72-2.2-5.5-5.9-5.92 3.7-.42 5.48-2.2 5.9-5.92Z" fill="currentColor"/>
               <path d="M3 17.3c3.9-1.5 8-1.2 12 .9v13.2c-4-2.1-8.1-2.4-12-.9V17.3ZM27 17.3c-3.9-1.5-8-1.2-12 .9v13.2c4-2.1 8.1-2.4 12-.9V17.3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
               <path d="M15 18.2v13.2" stroke="currentColor" stroke-width="1.3"/>
             </svg>
-            <span class="brand__name">The Wizarding Library</span>
+            <span class="brand__name">AVADRA</span>
           </a>
           <p class="site-footer__note">
             An independent, unofficial reading room for the seven Harry Potter
@@ -348,7 +348,7 @@
         </div>
       </div>
       <div class="site-footer__bottom">
-        <p>© 2026 The Wizarding Library. An unofficial fan project. Harry Potter and related names belong to their respective rights holders.</p>
+        <p>© 2026 AVADRA. An unofficial fan project. Harry Potter and related names belong to their respective rights holders.</p>
         <p>Built for slow reading and modest machines.</p>
       </div>
     </div>
@@ -362,6 +362,18 @@
           <svg aria-hidden="true"><use href="assets/icons.svg#icon-x"></use></svg>
         </button>
         <div id="book-dialog-body"></div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="reader-dialog" id="reader-dialog" aria-labelledby="reader-dialog-title">
+    <div class="reader-dialog__layout">
+      <div class="reader-dialog__visual" id="reader-dialog-visual"></div>
+      <div class="reader-dialog__content">
+        <button class="dialog-close reader-dialog__close" type="button" data-close-reader-dialog aria-label="Close reader selection">
+          <svg aria-hidden="true"><use href="assets/icons.svg#icon-x"></use></svg>
+        </button>
+        <div id="reader-dialog-body"></div>
       </div>
     </div>
   </dialog>

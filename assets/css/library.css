@@ -1583,6 +1583,250 @@
 }
 
 /* --------------------------------------------------------------------------
+   Reader selection dialog
+   -------------------------------------------------------------------------- */
+
+.reader-dialog {
+  width: min(940px, calc(100vw - 40px));
+  max-width: none;
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+  padding: 0;
+  overflow: auto;
+  border: 1px solid rgba(198, 161, 91, 0.55);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(ellipse 46% 70% at 16% 36%, rgba(198, 161, 91, 0.12), transparent 68%),
+    var(--ink-950);
+  color: var(--ivory);
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.65);
+  overscroll-behavior: contain;
+}
+
+.reader-dialog[open] {
+  animation: dialog-in 220ms var(--ease);
+}
+
+.reader-dialog__layout {
+  display: grid;
+  grid-template-columns: minmax(210px, 0.72fr) minmax(0, 1.55fr);
+  min-height: 520px;
+}
+
+.reader-dialog__visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(30px, 4.5vw, 56px);
+  border-right: 1px solid var(--line);
+  background:
+    radial-gradient(ellipse at 50% 54%, rgba(198, 161, 91, 0.16), transparent 66%),
+    var(--ink-1000);
+}
+
+.reader-dialog__visual .book-cover {
+  width: min(210px, 100%);
+}
+
+.reader-dialog__content {
+  position: relative;
+  padding: clamp(32px, 4.4vw, 58px) clamp(26px, 4.2vw, 56px) clamp(28px, 3.6vw, 44px);
+}
+
+.reader-dialog__close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  border-color: var(--line);
+  color: var(--ivory-muted);
+}
+
+.reader-dialog__close:hover {
+  border-color: var(--gold);
+  background: var(--gold-faint);
+  color: var(--ivory-strong);
+}
+
+.reader-dialog__kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--gold);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.reader-dialog__kicker svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
+.reader-dialog__title {
+  max-width: 19ch;
+  margin-top: 14px;
+  color: var(--ivory-strong);
+  font-size: clamp(2rem, 3.7vw, 3.05rem);
+  line-height: 0.99;
+}
+
+.reader-dialog__author {
+  margin-top: 9px;
+  color: var(--ivory-muted);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-style: italic;
+}
+
+.reader-dialog__place {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 15px;
+  color: var(--gold-bright);
+  font-size: 0.78rem;
+}
+
+.reader-dialog__place svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
+.reader-dialog__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.reader-option {
+  position: relative;
+  display: flex;
+  min-height: 210px;
+  flex-direction: column;
+  gap: 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(240, 231, 214, 0.025);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 180ms var(--ease), background-color 180ms var(--ease), transform 180ms var(--ease);
+}
+
+@media (hover: hover) {
+  .reader-option:hover {
+    border-color: var(--gold);
+    background: var(--gold-faint);
+    transform: translateY(-2px);
+  }
+
+  .reader-option:hover .reader-option__go svg {
+    transform: translateX(3px);
+  }
+}
+
+.reader-option:focus-visible {
+  outline-offset: 3px;
+}
+
+.reader-option__icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--gold-bright);
+}
+
+.reader-option__icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.reader-option__body {
+  display: block;
+  margin-top: 15px;
+}
+
+.reader-option__title {
+  display: block;
+  color: var(--ivory-strong);
+  font-family: var(--font-display);
+  font-size: 1.28rem;
+  line-height: 1.1;
+}
+
+.reader-option__description {
+  display: block;
+  margin-top: 8px;
+  color: var(--mist);
+  font-size: 0.81rem;
+  line-height: 1.55;
+}
+
+.reader-option__meta {
+  display: block;
+  margin-top: auto;
+  padding-top: 14px;
+  color: var(--gold);
+  font-size: 0.66rem;
+  letter-spacing: 0.05em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.reader-option__go {
+  position: absolute;
+  right: 17px;
+  bottom: 17px;
+  color: var(--gold-bright);
+}
+
+.reader-option__go svg {
+  width: 15px;
+  height: 15px;
+  transition: transform 180ms var(--ease);
+}
+
+.reader-option--disabled {
+  border-style: dashed;
+  opacity: 0.55;
+}
+
+.reader-option--disabled .reader-option__meta {
+  color: var(--mist);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.72rem;
+}
+
+.reader-option__status {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  color: var(--mist);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.reader-dialog__note {
+  margin-top: 20px;
+  color: var(--mist);
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.reader-dialog__back {
+  margin-top: 16px;
+  font-size: 0.82rem;
+}
+
+/* --------------------------------------------------------------------------
    Responsive
    -------------------------------------------------------------------------- */
 
@@ -1801,6 +2045,35 @@
     right: 12px;
   }
 
+  .reader-dialog {
+    width: calc(100vw - 24px);
+    max-height: calc(100dvh - 24px);
+  }
+
+  .reader-dialog__layout {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .reader-dialog__visual {
+    padding: 24px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .reader-dialog__visual .book-cover {
+    width: 132px;
+  }
+
+  .reader-dialog__content {
+    padding: 28px 24px 30px;
+  }
+
+  .reader-dialog__close {
+    top: 12px;
+    right: 12px;
+  }
+
   .site-footer__top {
     grid-template-columns: 1fr 1fr;
   }
@@ -1925,6 +2198,23 @@
   .collection__foot {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .reader-dialog__options {
+    grid-template-columns: 1fr;
+  }
+
+  .reader-option {
+    min-height: 0;
+  }
+
+  .reader-option__meta {
+    padding-top: 12px;
+  }
+
+  .reader-dialog__back {
+    width: 100%;
+    justify-content: center;
   }
 }
 

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Third-party notices — The Wizarding Library</title>
-  <meta name="description" content="Software, typefaces, and rights notices for The Wizarding Library.">
+  <title>Third-party notices — AVADRA</title>
+  <meta name="description" content="Software, typefaces, and rights notices for AVADRA.">
   <meta name="theme-color" content="#091119">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/ibarra-real-nova-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -19,7 +19,7 @@
     <header class="page-bar">
       <div class="container page-bar__inner">
         <a class="page-back" href="index.html">&larr; Library</a>
-        <span class="page-bar__name">The Wizarding Library</span>
+        <span class="page-bar__name">AVADRA</span>
       </div>
     </header>
 
@@ -39,7 +39,13 @@
 
           <h3>DearFlip 2.5.172 &mdash; page-flip engine</h3>
           <ul>
-            <li>Files: <code>assets/vendor/dearflip/</code></li>
+            <li>
+              Files: <code>assets/vendor/dearflip/</code> &mdash;
+              <code>css/dflip.min.css</code>, <code>js/dflip.min.js</code>,
+              <code>js/jquery.min.js</code>, <code>js/libs/pdf.min.js</code>,
+              <code>js/libs/pdf.worker.min.js</code>,
+              <code>js/libs/three.min.js</code>, <code>sound/turn2.mp3</code>
+            </li>
             <li>Copyright: DearFlip and its authors</li>
             <li>
               Licence: commercial licence from
@@ -49,17 +55,84 @@
             </li>
           </ul>
           <p>
-            The bundled <code>pdf.min.js</code> is Mozilla PDF.js (Apache 2.0)
-            and <code>three.min.js</code> is three.js (MIT); the upstream
-            notices apply to those files.
+            The AVADRA Flipbook in <code>flipbook.html</code> loads these files
+            locally via <code>window.dFlipLocation</code>.
+          </p>
+
+          <h3>Foliate-JS &mdash; EPUB and PDF reading engine</h3>
+          <ul>
+            <li>
+              Files: <code>assets/vendor/foliate/</code> &mdash; including
+              <code>view.js</code>, <code>epub.js</code>, <code>epubcfi.js</code>,
+              <code>paginator.js</code>, <code>fixed-layout.js</code>,
+              <code>pdf.js</code>, <code>search.js</code>,
+              <code>progress.js</code>, <code>overlayer.js</code>,
+              <code>ui/</code>, and the vendored dependencies listed below
+            </li>
+            <li>Copyright: John Factotum and contributors</li>
+            <li>
+              Licence: MIT &mdash; full text in
+              <code>assets/vendor/foliate/LICENSE</code>
+            </li>
+            <li><a href="https://github.com/johnfactotum/foliate-js" rel="noopener">github.com/johnfactotum/foliate-js</a></li>
+          </ul>
+          <p>
+            Foliate-JS is vendored from upstream and used by
+            <code>foliate-reader.html</code>. The AVADRA controller in
+            <code>assets/js/foliate-reader.js</code> is original project code.
+            The vendored PDF adapter contains a small null-destination guard for
+            PDFs whose outlines include headings without links; no other
+            functional changes were made.
           </p>
 
           <h3>Mozilla PDF.js</h3>
+          <p>Two separate copies are served:</p>
           <ul>
+            <li>
+              DearFlip&rsquo;s bundled copy:
+              <code>assets/vendor/dearflip/js/libs/pdf.min.js</code> and
+              <code>pdf.worker.min.js</code>.
+            </li>
+            <li>
+              Foliate&rsquo;s copy: <code>assets/vendor/foliate/vendor/pdfjs/</code>
+              &mdash; <code>pdf.mjs</code>, <code>pdf.worker.mjs</code>,
+              <code>cmaps/</code>, <code>standard_fonts/</code>, and the layer
+              stylesheets.
+            </li>
             <li>Copyright: Mozilla Foundation and contributors</li>
-            <li>Licence: Apache License 2.0</li>
+            <li>
+              Licence: Apache License 2.0 &mdash; full text in
+              <code>assets/vendor/foliate/vendor/pdfjs/LICENSE</code> for the
+              Foliate copy; the DearFlip copy carries its own bundled notice.
+            </li>
             <li><a href="https://github.com/mozilla/pdf.js" rel="noopener">github.com/mozilla/pdf.js</a></li>
           </ul>
+
+          <h3>zip.js</h3>
+          <ul>
+            <li><code>assets/vendor/foliate/vendor/zip.js</code></li>
+            <li>Copyright: Gildas Lormeau</li>
+            <li>
+              Licence: BSD 3-Clause &mdash; full text in
+              <code>assets/vendor/foliate/vendor/LICENSE-zip.js.txt</code>
+            </li>
+            <li><a href="https://github.com/gildas-lormeau/zip.js" rel="noopener">github.com/gildas-lormeau/zip.js</a></li>
+          </ul>
+          <p>
+            Used by Foliate to read EPUB, FBZ, and CBZ archives locally.
+          </p>
+
+          <h3>fflate</h3>
+          <ul>
+            <li><code>assets/vendor/foliate/vendor/fflate.js</code></li>
+            <li>Copyright: Arjun Barrett</li>
+            <li>
+              Licence: MIT &mdash; full text in
+              <code>assets/vendor/foliate/vendor/LICENSE-fflate.txt</code>
+            </li>
+            <li><a href="https://github.com/101arrowz/fflate" rel="noopener">github.com/101arrowz/fflate</a></li>
+          </ul>
+          <p>Used by Foliate&rsquo;s MOBI/AZW3 support.</p>
 
           <h3>three.js</h3>
           <ul>
@@ -131,7 +204,7 @@
     <footer class="page-footer">
       <div class="container">
         <p>An unofficial fan project. Harry Potter belongs to its rights holders.</p>
-        <p><a href="index.html">The Wizarding Library</a></p>
+        <p><a href="index.html">AVADRA</a></p>
       </div>
     </footer>
   </div>
